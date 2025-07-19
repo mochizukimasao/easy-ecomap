@@ -65,6 +65,16 @@
       .scrollbar-track-gray-100::-webkit-scrollbar-track {
         background: #f3f4f6;
       }
+      
+      /* Line drawing feedback */
+      .line-drawing-mode {
+        background: rgba(59, 130, 246, 0.1) !important;
+      }
+      .line-start-point {
+        fill: #3b82f6;
+        stroke: white;
+        stroke-width: 3px;
+      }
     </style>
 <link rel="stylesheet" href="/index.css">
 </head>
@@ -388,7 +398,7 @@
         );
       };
       
-      const Canvas = ({ canvasState, onMouseDown, onMouseMove, onMouseUp, onMouseLeave, onDoubleClickShape, onDoubleClickText, editingTextId, onTextChange, editingShapeId, onShapeTextChange, selectedElementIds, drawingLine, selectionBox, showGrid, svgRef, activeTool, shapePreview, resizingState, lineHandleDragState }) => {
+      const Canvas = ({ canvasState, onMouseDown, onMouseMove, onMouseUp, onMouseLeave, onTouchStart, onTouchMove, onTouchEnd, onDoubleClickShape, onDoubleClickText, editingTextId, onTextChange, editingShapeId, onShapeTextChange, selectedElementIds, drawingLine, selectionBox, showGrid, svgRef, activeTool, shapePreview, resizingState, lineHandleDragState }) => {
         const { shapes, lines, texts, width, height } = canvasState;
         const textareaRef = useRef(null);
         
@@ -452,7 +462,7 @@
 
         const allLines = drawingLine ? [...lines, drawingLine] : lines;
 
-        return e('svg', { ref: svgRef, className: `w-full h-full ${cursorClass}` , width, height, onMouseDown, onMouseMove, onMouseUp, onMouseLeave },
+        return e('svg', { ref: svgRef, className: `w-full h-full ${cursorClass}` , width, height, onMouseDown, onMouseMove, onMouseUp, onMouseLeave, onTouchStart, onTouchMove, onTouchEnd },
             e('defs', null,
                 showGrid && e('pattern', { id: 'grid', width: GRID_SIZE, height: GRID_SIZE, patternUnits: 'userSpaceOnUse' },
                     e('path', { d: `M ${GRID_SIZE} 0 L 0 0 0 ${GRID_SIZE}` , fill: 'none', stroke: 'rgba(0, 0, 0, 0.15)', strokeWidth: '1' })
@@ -519,7 +529,8 @@
                 cx: point.x, cy: point.y, r: 6,
                 className: 'line-handle'
             })),
-            selectionBox && e('rect', { x: selectionBox.x, y: selectionBox.y, width: selectionBox.width, height: selectionBox.height, fill: 'rgba(59, 130, 246, 0.2)', stroke: 'rgba(59, 130, 246, 0.8)', strokeWidth: '1' })
+            selectionBox && e('rect', { x: selectionBox.x, y: selectionBox.y, width: selectionBox.width, height: selectionBox.height, fill: 'rgba(59, 130, 246, 0.2)', stroke: 'rgba(59, 130, 246, 0.8)', strokeWidth: '1' }),
+            drawingLine && e('circle', { cx: drawingLine.start.x, cy: drawingLine.start.y, r: 6, className: 'line-start-point' })
         );
       };
 
@@ -604,9 +615,12 @@
           const [shapePreview, setShapePreview] = useState(null);
           const [resizingState, setResizingState] = useState(null);
           const [lineHandleDragState, setLineHandleDragState] = useState(null);
+          const [touchLineDrawing, setTouchLineDrawing] = useState(null);
 
           const dragStartPosRef = useRef({ x: 0, y: 0 });
           const dragElementStartPosRef = useRef(new Map());
+          const touchStartTimeRef = useRef(0);
+          const longPressTimerRef = useRef(null);
           
           const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
           const svgRef = useRef(null);
@@ -776,8 +790,30 @@
                   commitCanvasState(prev => ({...prev, texts: [...prev.texts, newText]}));
                   setEditingTextId(newText.id);
               } else if (Object.values(EcoLineType).includes(activeTool)) {
-                  const startShape = findShapeAt(pos);
-                  setDrawingLine({ id: Date.now(), type: activeTool, start: startShape ? {x: startShape.x + startShape.width/2, y: startShape.y + startShape.height/2} : pos, end: pos, startShapeId: startShape?.id || null, endShapeId: null });
+                  if (drawingLine) {
+                      // 2回目のクリック/タップ - 線を完成
+                      const endShape = findShapeAt(pos);
+                      const finalLine = { 
+                          ...drawingLine, 
+                          end: endShape ? { x: endShape.x + endShape.width/2, y: endShape.y + endShape.height/2} : pos, 
+                          endShapeId: endShape?.id || null 
+                      };
+                      if(finalLine.startShapeId !== finalLine.endShapeId || (!finalLine.startShapeId && !finalLine.endShapeId)) {
+                          commitCanvasState(prev => ({ ...prev, lines: [...prev.lines, finalLine] }));
+                      }
+                      setDrawingLine(null);
+                  } else {
+                      // 1回目のクリック/タップ - 線の開始
+                      const startShape = findShapeAt(pos);
+                      setDrawingLine({ 
+                          id: Date.now(), 
+                          type: activeTool, 
+                          start: startShape ? {x: startShape.x + startShape.width/2, y: startShape.y + startShape.height/2} : pos, 
+                          end: pos, 
+                          startShapeId: startShape?.id || null, 
+                          endShapeId: null 
+                      });
+                  }
               } else if (activeTool === 'select') {
                   const elementToSelect = clickedElement;
                   if(elementToSelect) {
@@ -865,7 +901,7 @@
                       });
                       return { ...prev, shapes: newShapes, texts: newTexts, lines: newLines };
                   });
-              } else if (drawingLine) {
+              } else if (drawingLine && !isDraggingRef.current) {
                   setDrawingLine(prev => prev ? {...prev, end: pos} : null);
               } else if (selectionBox) {
                   setSelectionBox({x: Math.min(dragStartPosRef.current.x, pos.x), y: Math.min(dragStartPosRef.current.y, pos.y), width: Math.abs(dragStartPosRef.current.x - pos.x), height: Math.abs(dragStartPosRef.current.y - pos.y) });
@@ -893,19 +929,57 @@
               if (shapePreview) setShapePreview(null);
           };
 
+          const handleTouchStart = (e) => {
+              e.preventDefault();
+              const touch = e.touches[0];
+              const pos = getSVGPoint(touch);
+              touchStartTimeRef.current = Date.now();
+              
+              // 長押し検出のタイマーを設定
+              longPressTimerRef.current = setTimeout(() => {
+                  // 長押しでライン選択メニューを表示
+                  if (Object.values(EcoLineType).includes(activeTool)) {
+                      // 既にラインツールが選択されている場合は何もしない
+                      return;
+                  }
+                  // ここで長押しメニューを表示する処理を追加可能
+              }, 500);
+              
+              handleMouseDown({ button: 0, clientX: touch.clientX, clientY: touch.clientY });
+          };
+
+          const handleTouchMove = (e) => {
+              e.preventDefault();
+              if (longPressTimerRef.current) {
+                  clearTimeout(longPressTimerRef.current);
+                  longPressTimerRef.current = null;
+              }
+              
+              const touch = e.touches[0];
+              handleMouseMove({ clientX: touch.clientX, clientY: touch.clientY });
+          };
+
+          const handleTouchEnd = (e) => {
+              e.preventDefault();
+              if (longPressTimerRef.current) {
+                  clearTimeout(longPressTimerRef.current);
+                  longPressTimerRef.current = null;
+              }
+              
+              const touchDuration = Date.now() - touchStartTimeRef.current;
+              
+              // タッチ終了の処理
+              if (e.changedTouches.length > 0) {
+                  const touch = e.changedTouches[0];
+                  handleMouseUp({ clientX: touch.clientX, clientY: touch.clientY });
+              }
+          };
+
           const handleMouseUp = (e) => {
               if (resizingState || lineHandleDragState || (isDraggingRef.current && activeTool === 'select' && dragElementStartPosRef.current.size > 0)) {
                   commitCanvasState(canvasState);
               }
-              if (drawingLine) {
-                  const pos = getSVGPoint(e);
-                  const endShape = findShapeAt(pos);
-                  const finalLine = { ...drawingLine, end: endShape ? { x: endShape.x + endShape.width/2, y: endShape.y + endShape.height/2} : pos, endShapeId: endShape?.id || null };
-                  if(finalLine.startShapeId !== finalLine.endShapeId || (!finalLine.startShapeId && !finalLine.endShapeId)) {
-                    commitCanvasState(prev => ({ ...prev, lines: [...prev.lines, finalLine] }));
-                  }
-                  setDrawingLine(null);
-              } else if (selectionBox) {
+              if (selectionBox) {
                   const {x, y, width, height} = selectionBox;
                   const selectedIds = [...canvasState.shapes, ...canvasState.texts, ...canvasState.lines]
                       .filter(el => {
@@ -1238,7 +1312,7 @@
               e(Header, { onSave: () => setIsSaveModalOpen(true), onLoadSVG: handleLoadSVG, onUndo: handleUndo, onRedo: handleRedo, canUndo: historyIndex > 0, canRedo: historyIndex < history.length - 1, showGrid, setShowGrid }),
               e(Palette, { activeTool, setActiveTool, fontSize, setFontSize: handleFontSizeChange }),
               e('main', { className: "w-full h-full pt-32" },
-                  e(Canvas, { svgRef, canvasState, onMouseDown: handleMouseDown, onMouseMove: handleMouseMove, onMouseUp: handleMouseUp, onMouseLeave: handleMouseLeave, onDoubleClickShape: handleDoubleClickShape, onDoubleClickText: handleDoubleClickText, editingTextId, onTextChange: handleTextChange, editingShapeId, onShapeTextChange: handleShapeTextChange, selectedElementIds, drawingLine, selectionBox, showGrid, activeTool, shapePreview, resizingState, lineHandleDragState })
+                  e(Canvas, { svgRef, canvasState, onMouseDown: handleMouseDown, onMouseMove: handleMouseMove, onMouseUp: handleMouseUp, onMouseLeave: handleMouseLeave, onTouchStart: handleTouchStart, onTouchMove: handleTouchMove, onTouchEnd: handleTouchEnd, onDoubleClickShape: handleDoubleClickShape, onDoubleClickText: handleDoubleClickText, editingTextId, onTextChange: handleTextChange, editingShapeId, onShapeTextChange: handleShapeTextChange, selectedElementIds, drawingLine, selectionBox, showGrid, activeTool, shapePreview, resizingState, lineHandleDragState })
               ),
               e(SaveModal, { isOpen: isSaveModalOpen, onClose: () => setIsSaveModalOpen(false), onSave: handleConfirmSave, t })
           );
