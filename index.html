@@ -263,7 +263,7 @@
         
         const toolButton = (tool) => e('button', {
           key: tool.id, onClick: () => setActiveTool(tool.id),
-          className: `p-3 rounded-md transition-colors ${activeTool === tool.id ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`,
+          className: `p-3 rounded-md transition-colors flex items-center justify-center ${activeTool === tool.id ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`,
           title: tool.label
         }, tool.icon);
 
