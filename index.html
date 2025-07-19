@@ -694,13 +694,6 @@
           const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
           const svgRef = useRef(null);
           
-          // デバッグ用のstate
-          const [debugInfo, setDebugInfo] = useState('アプリ起動完了');
-          
-          const addDebugInfo = useCallback((info) => {
-              const timestamp = new Date().toLocaleTimeString();
-              setDebugInfo(prev => `${timestamp}: ${info}\n${prev}`.slice(0, 500));
-          }, []);
 
           const updateHistory = useCallback((newState) => {
               const newHistory = history.slice(0, historyIndex + 1);
@@ -808,7 +801,6 @@
               if (e.button !== 0) return;
               const pos = getSVGPoint(e);
               
-              addDebugInfo(`MouseDown: tool=${activeTool}, target=${e.target?.tagName}, pos=(${Math.round(pos.x)},${Math.round(pos.y)})`);
               
               isDraggingRef.current = true;
               dragStartPosRef.current = pos;
@@ -852,7 +844,6 @@
 
               // 選択ツールの場合のみオブジェクト選択処理
               if (clickedElement && activeTool === 'select') {
-                  addDebugInfo(`Select clicked: id=${clickedElement.id}, type=${clickedElement.type || 'text'}`);
                   const isSelected = selectedElementIds.includes(clickedElement.id);
                   
                   // 選択状態を更新
@@ -870,7 +861,6 @@
                   const elementsToDrag = [...canvasState.shapes, ...canvasState.texts].filter(el => elementIdsToDrag.includes(el.id));
                   elementsToDrag.forEach(el => dragElementStartPosRef.current.set(el.id, {x: el.x, y: el.y}));
                   
-                  addDebugInfo(`Drag prepared: ${dragElementStartPosRef.current.size} elements`);
                   
                   // 選択ツールでもドラッグ状態を有効にする
                   isDraggingRef.current = true;
@@ -937,7 +927,7 @@
                   // 選択ツール以外の場合は選択を解除
                   setSelectedElementIds([]);
               }
-          }, [activeTool, canvasState, drawingLine, editingTextId, editingShapeId, selectedElementIds, commitCanvasState, t, fontSize, addDebugInfo]);
+          }, [activeTool, canvasState, drawingLine, editingTextId, editingShapeId, selectedElementIds, commitCanvasState, t, fontSize]);
 
           const handleMouseMove = useCallback((e) => {
               if (!isDraggingRef.current) {
@@ -1039,16 +1029,14 @@
               touchStartTimeRef.current = Date.now();
               touchStartPosRef.current = getSVGPoint(touch);
               
-              addDebugInfo(`TouchStart: tool=${activeTool}, target=${e.target.tagName}`);
               
               // シンプルにマウスダウンを呼び出す
               handleMouseDown({ button: 0, clientX: touch.clientX, clientY: touch.clientY });
-          }, [handleMouseDown, activeTool, addDebugInfo]);
+          }, [handleMouseDown, activeTool]);
 
           const handleTouchMove = useCallback((e) => {
               const touch = e.touches[0];
               
-              addDebugInfo(`TouchMove: drag=${isDraggingRef.current}, elements=${dragElementStartPosRef.current.size}`);
               
               // ドラッグ中はスクロールを防止
               if (isDraggingRef.current && (dragElementStartPosRef.current.size > 0 || drawingLine || selectionBox || resizingState || lineHandleDragState)) {
@@ -1056,7 +1044,7 @@
               }
               
               handleMouseMove({ clientX: touch.clientX, clientY: touch.clientY });
-          }, [handleMouseMove, drawingLine, selectionBox, resizingState, lineHandleDragState, addDebugInfo]);
+          }, [handleMouseMove, drawingLine, selectionBox, resizingState, lineHandleDragState]);
 
           const handleTouchEnd = useCallback((e) => {
               if (e.changedTouches.length > 0) {
@@ -1404,12 +1392,6 @@
                   e(Canvas, { svgRef, canvasState, onMouseDown: handleMouseDown, onMouseMove: handleMouseMove, onMouseUp: handleMouseUp, onMouseLeave: handleMouseLeave, onTouchStart: handleTouchStart, onTouchMove: handleTouchMove, onTouchEnd: handleTouchEnd, onDoubleClickShape: handleDoubleClickShape, onDoubleClickText: handleDoubleClickText, editingTextId, onTextChange: handleTextChange, editingShapeId, onShapeTextChange: handleShapeTextChange, selectedElementIds, drawingLine, selectionBox, showGrid, activeTool, shapePreview, resizingState, lineHandleDragState })
               ),
               e(ToolHint, { activeTool, drawingLine, t }),
-              // デバッグ情報表示 - もっと目立つように
-              e('div', { 
-                  className: "fixed top-20 left-2 bg-red-600 text-white text-sm p-3 rounded shadow-lg max-w-sm max-h-40 overflow-auto z-50",
-                  style: { fontSize: '12px', lineHeight: '1.3', fontFamily: 'monospace' }
-              }, e('div', { style: { fontWeight: 'bold', marginBottom: '4px' } }, 'DEBUG:'), 
-                 e('pre', { style: { margin: 0, whiteSpace: 'pre-wrap' } }, debugInfo || 'タッチしてテスト...')),
               e(SaveModal, { isOpen: isSaveModalOpen, onClose: () => setIsSaveModalOpen(false), onSave: handleConfirmSave, t })
           );
       };
