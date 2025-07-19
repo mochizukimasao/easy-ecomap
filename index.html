@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -251,7 +250,7 @@
                     style: textStyle
                 })
             )
-            :
+            : 
             e('foreignObject', { x: 0, y: 0, width, height, className: 'select-none' },
                 e('div', { style: textStyle }, text)
             )
@@ -263,18 +262,16 @@
         
         const toolButton = (tool) => e('button', {
           key: tool.id, onClick: () => setActiveTool(tool.id),
-          className: `p-3 rounded-md transition-colors flex items-center justify-center ${activeTool === tool.id ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`,
+          className: `w-10 h-10 rounded-md transition-colors flex items-center justify-center ${activeTool === tool.id ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'} `,
           title: tool.label
         }, tool.icon);
 
-        const lineTool = (tool) => e('div', { key: tool.id, className: 'flex items-center space-x-2' },
-            e('button', {
-                onClick: () => setActiveTool(tool.id),
-                className: `p-2 rounded-md transition-colors ${activeTool === tool.id ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`,
-                title: tool.label
-            }, e('div', { className: 'w-6 h-6 flex items-center justify-center'}, tool.icon)),
-            e('span', { className: 'text-sm text-gray-700' }, tool.label)
-        );
+        const lineTool = (tool) => e('button', {
+            key: tool.id,
+            onClick: () => setActiveTool(tool.id),
+            className: `w-10 h-10 rounded-md transition-colors flex items-center justify-center ${activeTool === tool.id ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'} `,
+            title: tool.label
+        }, e('div', { className: 'w-6 h-6 flex items-center justify-center'}, tool.icon));
         
         const mainTools = [
           { id: 'select', icon: e(SelectIcon), label: t('select') },
@@ -290,19 +287,17 @@
           { id: EcoLineType.Stressful, icon: e(StressfulLineIcon), label: t('stressfulConnection') }
         ];
 
-        return e('div', { className: 'absolute top-16 left-4 bg-white shadow-lg rounded-lg p-3 flex flex-col space-y-3 z-10 border border-gray-200 w-56' },
-          e('div', { className: 'grid grid-cols-2 gap-1' }, mainTools.map(tool => toolButton(tool))),
-          e('hr', { className: 'border-gray-200' }),
-          e('div', { className: 'flex flex-col space-y-2' }, lineTools.map(tool => lineTool(tool))),
-          e('hr', { className: 'border-gray-200' }),
-          e('div', null,
-            e('label', { className: 'text-xs text-gray-500 font-semibold mb-1 block px-1' }, t('fontSize')),
-            e('div', { className: 'flex space-x-1' },
-              Object.entries(FONT_SIZES).map(([name, size]) => e('button', {
-                key: name, onClick: () => setFontSize(size),
-                className: `px-3 py-1 text-sm rounded-md transition-colors w-full ${fontSize === size ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`
-              }, t(`font${name.charAt(0).toUpperCase() + name.slice(1)}`)))
-            )
+        return e('div', { className: 'absolute top-16 left-1/2 -translate-x-1/2 bg-white shadow-lg rounded-lg p-2 flex items-center space-x-2 z-10 border border-gray-200' },
+          e('div', { className: 'flex items-center space-x-1' }, mainTools.map(tool => toolButton(tool))),
+          e('div', { className: 'w-px h-6 bg-gray-300' }),
+          e('div', { className: 'flex items-center space-x-1' }, lineTools.map(tool => lineTool(tool))),
+          e('div', { className: 'w-px h-6 bg-gray-300' }),
+          e('div', { className: 'flex items-center space-x-1' },
+            Object.entries(FONT_SIZES).map(([name, size]) => e('button', {
+              key: name, onClick: () => setFontSize(size),
+              className: `w-8 h-8 text-sm rounded-md transition-colors flex items-center justify-center ${fontSize === size ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'} `,
+              title: t(`font${name.charAt(0).toUpperCase() + name.slice(1)}`)
+            }, t(`font${name.charAt(0).toUpperCase() + name.slice(1)}`)[0]))
           )
         );
       };
@@ -311,9 +306,9 @@
         const { t, language, setLanguage } = useLanguage();
         const fileInputRef = useRef(null);
 
-        const createButton = (labelOrIcon, onClick, disabled = false, title = '') => e('button', {
+        const createButton = (labelOrIcon, onClick, disabled = false, title = '', isActive = false) => e('button', {
             onClick, disabled, title,
-            className: "px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className: `px-3 py-2 text-sm font-medium rounded-md shadow-sm border hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed ${isActive ? 'bg-blue-100 text-blue-800 border-blue-500' : 'bg-white text-gray-700 border-gray-300'} `
           }, labelOrIcon);
 
         return e('header', { className: 'absolute top-0 left-0 right-0 h-14 bg-white shadow-md flex items-center justify-between px-2 sm:px-4 z-20 border-b border-gray-200' },
@@ -405,10 +400,10 @@
 
         const allLines = drawingLine ? [...lines, drawingLine] : lines;
 
-        return e('svg', { ref: svgRef, className: `w-full h-full ${cursorClass}`, width, height, onMouseDown, onMouseMove, onMouseUp, onMouseLeave },
+        return e('svg', { ref: svgRef, className: `w-full h-full ${cursorClass}` , width, height, onMouseDown, onMouseMove, onMouseUp, onMouseLeave },
             e('defs', null,
                 showGrid && e('pattern', { id: 'grid', width: GRID_SIZE, height: GRID_SIZE, patternUnits: 'userSpaceOnUse' },
-                    e('path', { d: `M ${GRID_SIZE} 0 L 0 0 0 ${GRID_SIZE}`, fill: 'none', stroke: 'rgba(0, 0, 0, 0.15)', strokeWidth: '1' })
+                    e('path', { d: `M ${GRID_SIZE} 0 L 0 0 0 ${GRID_SIZE}` , fill: 'none', stroke: 'rgba(0, 0, 0, 0.15)', strokeWidth: '1' })
                 )
             ),
             e('rect', { width: '100%', height: '100%', fill: showGrid ? 'url(#grid)' : 'white' }),
@@ -443,7 +438,7 @@
                 }
 
 
-                return e('g', { key: text.id, transform: `translate(${text.x}, ${text.y})`, className: elementCursorClass },
+                return e('g', { key: text.id, transform: `translate(${text.x}, ${text.y})` , className: elementCursorClass },
                     isEditing ? e('foreignObject', { x: 0, y: 0, width: text.width, height: text.height },
                         e('textarea', {
                             ref: textareaRef, value: text.text,
