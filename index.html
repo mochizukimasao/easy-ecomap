@@ -499,7 +499,6 @@
                     elementCursorClass = 'cursor-crosshair';
                 }
 
-
                 return e('g', { key: text.id, transform: `translate(${text.x}, ${text.y})` , className: elementCursorClass },
                     isEditing ? e('foreignObject', { x: 0, y: 0, width: text.width, height: text.height },
                         e('textarea', {
@@ -519,8 +518,34 @@
                 );
             }),
             singleSelectedElement && getResizeHandles(singleSelectedElement).map(handle => e('rect', {
-                key: handle.id, 'data-handle': handle.id, x: handle.x, y: handle.y, width: 8, height: 8,
-                className: `resize-handle ${handle.cursor}`
+                key: handle.id, 'data-handle': handle.id, x: handle.x, y: handle.y, width: 12, height: 12,
+                className: `resize-handle ${handle.cursor}`,
+                onMouseDown: (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // マウスダウンイベントは既にhandleMouseDownで処理される
+                },
+                onTouchStart: (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // 即座にリサイズ状態を開始
+                    setResizingState({
+                        elementId: singleSelectedElement.id,
+                        handle: handle.id,
+                        startX: singleSelectedElement.x,
+                        startY: singleSelectedElement.y,
+                        startWidth: singleSelectedElement.width,
+                        startHeight: singleSelectedElement.height,
+                        cursor: handle.cursor
+                    });
+                    
+                    const touch = e.touches[0];
+                    const pos = getSVGPoint(touch);
+                    isDraggingRef.current = true;
+                    dragStartPosRef.current = pos;
+                }
             })),
             singleSelectedLine && [singleSelectedLine.start, singleSelectedLine.end].map((point, index) => e('circle', {
                 key: `handle-line-${index}`,
@@ -540,7 +565,7 @@
         const getToolHint = (tool, isDrawing) => {
           const hints = {
             ja: {
-              select: 'オブジェクトをタップで選択、ドラッグで移動、空白をドラッグで範囲選択',
+              select: 'タップで選択、ドラッグで移動、選択後の四隅をドラッグでサイズ変更',
               text: 'タップでテキストを配置、既存テキストをダブルタップで編集',
               shape: 'タップで項目を配置、既存項目をダブルタップで名前を編集',
               eraser: '削除したいオブジェクトや線をタップ',
@@ -550,7 +575,7 @@
               Stressful: isDrawing ? '終了点をタップして線を完成 (Escapeでキャンセル)' : '開始点をタップ（オブジェクト上でも可）、次に終了点をタップ'
             },
             en: {
-              select: 'Tap objects to select, drag to move, drag empty area for selection box',
+              select: 'Tap to select, drag to move, drag corners after selection to resize',
               text: 'Tap to place text, double-tap existing text to edit',
               shape: 'Tap to place item, double-tap existing item to edit name',
               eraser: 'Tap objects or lines to delete',
@@ -664,10 +689,18 @@
           const dragStartPosRef = useRef({ x: 0, y: 0 });
           const dragElementStartPosRef = useRef(new Map());
           const touchStartTimeRef = useRef(0);
-          const longPressTimerRef = useRef(null);
+          const touchStartPosRef = useRef({ x: 0, y: 0 });
           
           const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
           const svgRef = useRef(null);
+          
+          // デバッグ用のstate
+          const [debugInfo, setDebugInfo] = useState('アプリ起動完了');
+          
+          const addDebugInfo = useCallback((info) => {
+              const timestamp = new Date().toLocaleTimeString();
+              setDebugInfo(prev => `${timestamp}: ${info}\n${prev}`.slice(0, 500));
+          }, []);
 
           const updateHistory = useCallback((newState) => {
               const newHistory = history.slice(0, historyIndex + 1);
@@ -774,6 +807,9 @@
           const handleMouseDown = useCallback((e) => {
               if (e.button !== 0) return;
               const pos = getSVGPoint(e);
+              
+              addDebugInfo(`MouseDown: tool=${activeTool}, target=${e.target?.tagName}, pos=(${Math.round(pos.x)},${Math.round(pos.y)})`);
+              
               isDraggingRef.current = true;
               dragStartPosRef.current = pos;
               
@@ -804,6 +840,8 @@
                               e.target.classList.contains('cursor-nesw-resize') ? 'cursor-nesw-resize' :
                               e.target.classList.contains('cursor-ns-resize') ? 'cursor-ns-resize' : 'cursor-ew-resize'
                   });
+                  isDraggingRef.current = true;
+                  dragStartPosRef.current = pos;
                   return;
               }
 
@@ -814,6 +852,7 @@
 
               // 選択ツールの場合のみオブジェクト選択処理
               if (clickedElement && activeTool === 'select') {
+                  addDebugInfo(`Select clicked: id=${clickedElement.id}, type=${clickedElement.type || 'text'}`);
                   const isSelected = selectedElementIds.includes(clickedElement.id);
                   
                   // 選択状態を更新
@@ -830,6 +869,12 @@
                       [clickedElement.id];
                   const elementsToDrag = [...canvasState.shapes, ...canvasState.texts].filter(el => elementIdsToDrag.includes(el.id));
                   elementsToDrag.forEach(el => dragElementStartPosRef.current.set(el.id, {x: el.x, y: el.y}));
+                  
+                  addDebugInfo(`Drag prepared: ${dragElementStartPosRef.current.size} elements`);
+                  
+                  // 選択ツールでもドラッグ状態を有効にする
+                  isDraggingRef.current = true;
+                  dragStartPosRef.current = pos;
                   return; // 選択ツールの場合は以下の処理をスキップ
               }
 
@@ -886,11 +931,13 @@
                   // 空白エリアをクリックした場合は選択解除または矩形選択開始
                   setSelectedElementIds([]);
                   setSelectionBox({x: pos.x, y: pos.y, width: 0, height: 0});
+                  isDraggingRef.current = true;
+                  dragStartPosRef.current = pos;
               } else if (activeTool !== 'select' && activeTool !== 'eraser') {
                   // 選択ツール以外の場合は選択を解除
                   setSelectedElementIds([]);
               }
-          }, [activeTool, canvasState, drawingLine, editingTextId, editingShapeId, selectedElementIds, commitCanvasState, t, fontSize]);
+          }, [activeTool, canvasState, drawingLine, editingTextId, editingShapeId, selectedElementIds, commitCanvasState, t, fontSize, addDebugInfo]);
 
           const handleMouseMove = useCallback((e) => {
               if (!isDraggingRef.current) {
@@ -989,54 +1036,34 @@
 
           const handleTouchStart = useCallback((e) => {
               const touch = e.touches[0];
-              const pos = getSVGPoint(touch);
               touchStartTimeRef.current = Date.now();
+              touchStartPosRef.current = getSVGPoint(touch);
               
-              // オブジェクトがある場合や特定のツールの場合はデフォルト動作を防止
-              const clickedShape = findShapeAt(pos);
-              const clickedText = findTextAt(pos);
-              const clickedLine = !clickedShape && !clickedText ? findLineAt(pos) : null;
-              const clickedElement = clickedShape || clickedText || clickedLine;
+              addDebugInfo(`TouchStart: tool=${activeTool}, target=${e.target.tagName}`);
               
-              if (clickedElement || Object.values(EcoLineType).includes(activeTool) || activeTool === 'shape' || activeTool === 'text') {
-                  e.preventDefault();
-              }
-              
-              // 長押し検出のタイマーを設定
-              longPressTimerRef.current = setTimeout(() => {
-                  // 長押し処理（将来の拡張用）
-              }, 500);
-              
+              // シンプルにマウスダウンを呼び出す
               handleMouseDown({ button: 0, clientX: touch.clientX, clientY: touch.clientY });
-          }, [activeTool]);
+          }, [handleMouseDown, activeTool, addDebugInfo]);
 
           const handleTouchMove = useCallback((e) => {
-              if (longPressTimerRef.current) {
-                  clearTimeout(longPressTimerRef.current);
-                  longPressTimerRef.current = null;
-              }
+              const touch = e.touches[0];
               
-              // ドラッグ中や特定の操作中はスクロールを防止
+              addDebugInfo(`TouchMove: drag=${isDraggingRef.current}, elements=${dragElementStartPosRef.current.size}`);
+              
+              // ドラッグ中はスクロールを防止
               if (isDraggingRef.current && (dragElementStartPosRef.current.size > 0 || drawingLine || selectionBox || resizingState || lineHandleDragState)) {
                   e.preventDefault();
               }
               
-              const touch = e.touches[0];
               handleMouseMove({ clientX: touch.clientX, clientY: touch.clientY });
-          }, []);
+          }, [handleMouseMove, drawingLine, selectionBox, resizingState, lineHandleDragState, addDebugInfo]);
 
           const handleTouchEnd = useCallback((e) => {
-              if (longPressTimerRef.current) {
-                  clearTimeout(longPressTimerRef.current);
-                  longPressTimerRef.current = null;
-              }
-              
-              // タッチ終了の処理
               if (e.changedTouches.length > 0) {
                   const touch = e.changedTouches[0];
                   handleMouseUp({ clientX: touch.clientX, clientY: touch.clientY });
               }
-          }, []);
+          }, [handleMouseUp]);
 
           const handleMouseUp = useCallback((e) => {
               if (resizingState || lineHandleDragState || (isDraggingRef.current && dragElementStartPosRef.current.size > 0)) {
@@ -1377,6 +1404,12 @@
                   e(Canvas, { svgRef, canvasState, onMouseDown: handleMouseDown, onMouseMove: handleMouseMove, onMouseUp: handleMouseUp, onMouseLeave: handleMouseLeave, onTouchStart: handleTouchStart, onTouchMove: handleTouchMove, onTouchEnd: handleTouchEnd, onDoubleClickShape: handleDoubleClickShape, onDoubleClickText: handleDoubleClickText, editingTextId, onTextChange: handleTextChange, editingShapeId, onShapeTextChange: handleShapeTextChange, selectedElementIds, drawingLine, selectionBox, showGrid, activeTool, shapePreview, resizingState, lineHandleDragState })
               ),
               e(ToolHint, { activeTool, drawingLine, t }),
+              // デバッグ情報表示 - もっと目立つように
+              e('div', { 
+                  className: "fixed top-20 left-2 bg-red-600 text-white text-sm p-3 rounded shadow-lg max-w-sm max-h-40 overflow-auto z-50",
+                  style: { fontSize: '12px', lineHeight: '1.3', fontFamily: 'monospace' }
+              }, e('div', { style: { fontWeight: 'bold', marginBottom: '4px' } }, 'DEBUG:'), 
+                 e('pre', { style: { margin: 0, whiteSpace: 'pre-wrap' } }, debugInfo || 'タッチしてテスト...')),
               e(SaveModal, { isOpen: isSaveModalOpen, onClose: () => setIsSaveModalOpen(false), onSave: handleConfirmSave, t })
           );
       };
