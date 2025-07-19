@@ -727,7 +727,7 @@
               setSelectedElementIds([]);
           };
           
-          const handleMouseDown = (e) => {
+          const handleMouseDown = useCallback((e) => {
               if (e.button !== 0) return;
               const pos = getSVGPoint(e);
               isDraggingRef.current = true;
@@ -805,14 +805,17 @@
                   } else {
                       // 1回目のクリック/タップ - 線の開始
                       const startShape = findShapeAt(pos);
-                      setDrawingLine({ 
+                      const newLine = { 
                           id: Date.now(), 
                           type: activeTool, 
                           start: startShape ? {x: startShape.x + startShape.width/2, y: startShape.y + startShape.height/2} : pos, 
                           end: pos, 
                           startShapeId: startShape?.id || null, 
                           endShapeId: null 
-                      });
+                      };
+                      setDrawingLine(newLine);
+                      // タッチデバイスの場合は即座にドラッグ状態を解除
+                      isDraggingRef.current = false;
                   }
               } else if (activeTool === 'select') {
                   const elementToSelect = clickedElement;
@@ -833,9 +836,9 @@
                       setSelectionBox({x: pos.x, y: pos.y, width: 0, height: 0});
                   }
               }
-          };
+          }, [activeTool, canvasState, drawingLine, editingTextId, editingShapeId, selectedElementIds, commitCanvasState, t, fontSize]);
 
-          const handleMouseMove = (e) => {
+          const handleMouseMove = useCallback((e) => {
               if (!isDraggingRef.current) {
                   if (activeTool === 'shape') {
                       const pos = getSVGPoint(e);
@@ -923,33 +926,29 @@
                       return { ...prev, shapes: newShapes, texts: newTexts, lines: newLines };
                   });
               }
-          };
+          }, [activeTool, drawingLine, selectionBox, selectedElementIds, resizingState, lineHandleDragState, canvasState, setCanvasState]);
           
           const handleMouseLeave = () => {
               if (shapePreview) setShapePreview(null);
           };
 
-          const handleTouchStart = (e) => {
-              e.preventDefault();
+          const handleTouchStart = useCallback((e) => {
+              // デフォルトのタッチ動作を部分的に防止
+              if (Object.values(EcoLineType).includes(activeTool) || activeTool === 'shape' || activeTool === 'text') {
+                  e.preventDefault();
+              }
               const touch = e.touches[0];
-              const pos = getSVGPoint(touch);
               touchStartTimeRef.current = Date.now();
               
               // 長押し検出のタイマーを設定
               longPressTimerRef.current = setTimeout(() => {
-                  // 長押しでライン選択メニューを表示
-                  if (Object.values(EcoLineType).includes(activeTool)) {
-                      // 既にラインツールが選択されている場合は何もしない
-                      return;
-                  }
-                  // ここで長押しメニューを表示する処理を追加可能
+                  // 長押し処理（将来の拡張用）
               }, 500);
               
               handleMouseDown({ button: 0, clientX: touch.clientX, clientY: touch.clientY });
-          };
+          }, [activeTool]);
 
-          const handleTouchMove = (e) => {
-              e.preventDefault();
+          const handleTouchMove = useCallback((e) => {
               if (longPressTimerRef.current) {
                   clearTimeout(longPressTimerRef.current);
                   longPressTimerRef.current = null;
@@ -957,25 +956,22 @@
               
               const touch = e.touches[0];
               handleMouseMove({ clientX: touch.clientX, clientY: touch.clientY });
-          };
+          }, []);
 
-          const handleTouchEnd = (e) => {
-              e.preventDefault();
+          const handleTouchEnd = useCallback((e) => {
               if (longPressTimerRef.current) {
                   clearTimeout(longPressTimerRef.current);
                   longPressTimerRef.current = null;
               }
-              
-              const touchDuration = Date.now() - touchStartTimeRef.current;
               
               // タッチ終了の処理
               if (e.changedTouches.length > 0) {
                   const touch = e.changedTouches[0];
                   handleMouseUp({ clientX: touch.clientX, clientY: touch.clientY });
               }
-          };
+          }, []);
 
-          const handleMouseUp = (e) => {
+          const handleMouseUp = useCallback((e) => {
               if (resizingState || lineHandleDragState || (isDraggingRef.current && activeTool === 'select' && dragElementStartPosRef.current.size > 0)) {
                   commitCanvasState(canvasState);
               }
@@ -997,7 +993,7 @@
               setResizingState(null);
               setLineHandleDragState(null);
               dragElementStartPosRef.current.clear();
-          };
+          }, [resizingState, lineHandleDragState, activeTool, selectionBox, canvasState, commitCanvasState, setSelectedElementIds]);
 
           const handleDoubleClickShape = (id) => {
               setSelectedElementIds([]);
@@ -1293,7 +1289,6 @@
                           setDrawingLine(null);
                           setSelectionBox(null);
                           setSelectedElementIds([]);
-                          setActiveTool('select');
                       }
                   }
               };
