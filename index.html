@@ -3,10 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>かんたんエコマップ</title>
+    <title>かんたんエコマップ - 中間版</title>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      body {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+      }
+      .resize-handle {
+        fill: black;
+        stroke: white;
+        stroke-width: 2px;
+      }
+    </style>
 </head>
 <body class="bg-white">
     <div id="root"></div>
@@ -16,24 +28,399 @@
         console.log('React:', typeof React);
         console.log('ReactDOM:', typeof ReactDOM);
         
-        const { useState } = React;
+        const { useState, useRef, useCallback } = React;
         const e = React.createElement;
         
-        function App() {
-            console.log('App component rendering...');
-            const [count, setCount] = useState(0);
+        // --- CONSTANTS ---
+        const EcoShapeType = {
+            Item: 'Item',
+        };
+        
+        const EcoLineType = {
+            Strong: 'Strong',
+            Normal: 'Normal',
+            Weak: 'Weak',
+            Stressful: 'Stressful',
+        };
+        
+        const SHAPE_SIZES = {
+            default: { width: 160, height: 50 },
+        };
+        
+        const TEXT_SIZES = {
+            default: { width: 150, height: 40 },
+        };
+        
+        const LINE_STROKES = {
+            [EcoLineType.Strong]: 4,
+            [EcoLineType.Normal]: 2,
+            [EcoLineType.Weak]: 2,
+            [EcoLineType.Stressful]: 2,
+        };
+        
+        // --- SIMPLE LOCALIZATION ---
+        const t = (key) => {
+            const texts = {
+                headerTitle: 'かんたんエコマップ - 中間版',
+                save: '保存',
+                select: '選択',
+                text: 'テキスト',
+                addItem: '項目を追加',
+                strongConnection: '強い',
+                normalConnection: '普通',
+                weakConnection: '弱い',
+                stressfulConnection: 'ストレス',
+                defaultItemName: '新しい項目',
+                defaultText: 'テキストを入力',
+            };
+            return texts[key] || key;
+        };
+        
+        // --- UTILITY FUNCTIONS ---
+        const generateId = () => Math.random().toString(36).substr(2, 9);
+        
+        const downloadSVG = (svgContent, filename = 'ecomap.svg') => {
+            const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        };
+        
+        // --- HEADER COMPONENT ---
+        function Header({ onSave, selectedTool, onToolChange }) {
+            console.log('Header component rendering...');
             
             return e('div', { 
-                className: 'p-8',
+                className: 'bg-blue-600 text-white p-4 shadow-md'
+            }, [
+                e('div', { 
+                    key: 'container',
+                    className: 'flex items-center justify-between'
+                }, [
+                    e('h1', { 
+                        key: 'title',
+                        className: 'text-2xl font-bold'
+                    }, t('headerTitle')),
+                    
+                    // Simple toolbar
+                    e('div', { 
+                        key: 'toolbar',
+                        className: 'flex gap-2'
+                    }, [
+                        e('button', {
+                            key: 'select',
+                            className: `px-3 py-2 rounded ${selectedTool === 'select' ? 'bg-blue-800' : 'bg-blue-500 hover:bg-blue-700'}`,
+                            onClick: () => onToolChange('select')
+                        }, t('select')),
+                        
+                        e('button', {
+                            key: 'text',
+                            className: `px-3 py-2 rounded ${selectedTool === 'text' ? 'bg-blue-800' : 'bg-blue-500 hover:bg-blue-700'}`,
+                            onClick: () => onToolChange('text')
+                        }, t('text')),
+                        
+                        e('button', {
+                            key: 'item',
+                            className: `px-3 py-2 rounded ${selectedTool === 'item' ? 'bg-blue-800' : 'bg-blue-500 hover:bg-blue-700'}`,
+                            onClick: () => onToolChange('item')
+                        }, t('addItem')),
+                        
+                        e('button', {
+                            key: 'strong',
+                            className: `px-3 py-2 rounded ${selectedTool === 'strong' ? 'bg-blue-800' : 'bg-blue-500 hover:bg-blue-700'}`,
+                            onClick: () => onToolChange('strong')
+                        }, t('strongConnection')),
+                        
+                        e('button', {
+                            key: 'normal',
+                            className: `px-3 py-2 rounded ${selectedTool === 'normal' ? 'bg-blue-800' : 'bg-blue-500 hover:bg-blue-700'}`,
+                            onClick: () => onToolChange('normal')
+                        }, t('normalConnection')),
+                        
+                        e('button', {
+                            key: 'save',
+                            className: 'px-4 py-2 bg-green-500 hover:bg-green-700 rounded',
+                            onClick: onSave
+                        }, t('save'))
+                    ])
+                ])
+            ]);
+        }
+        
+        // --- SHAPE COMPONENT ---
+        function Shape({ shape, isSelected, onSelect, onMove }) {
+            const handleMouseDown = (e) => {
+                if (e.button !== 0) return;
+                e.preventDefault();
+                onSelect(shape.id);
+                
+                const rect = e.currentTarget.ownerSVGElement.getBoundingClientRect();
+                const startX = e.clientX - rect.left - shape.x;
+                const startY = e.clientY - rect.top - shape.y;
+                
+                const handleMouseMove = (e) => {
+                    const newX = e.clientX - rect.left - startX;
+                    const newY = e.clientY - rect.top - startY;
+                    onMove(shape.id, newX, newY);
+                };
+                
+                const handleMouseUp = () => {
+                    document.removeEventListener('mousemove', handleMouseMove);
+                    document.removeEventListener('mouseup', handleMouseUp);
+                };
+                
+                document.addEventListener('mousemove', handleMouseMove);
+                document.addEventListener('mouseup', handleMouseUp);
+            };
+            
+            return e('g', { key: shape.id }, [
+                e('rect', {
+                    key: 'rect',
+                    x: shape.x,
+                    y: shape.y,
+                    width: shape.width,
+                    height: shape.height,
+                    fill: 'white',
+                    stroke: isSelected ? '#3b82f6' : '#374151',
+                    strokeWidth: isSelected ? 3 : 1,
+                    rx: 8,
+                    onMouseDown: handleMouseDown,
+                    style: { cursor: 'move' }
+                }),
+                e('text', {
+                    key: 'text',
+                    x: shape.x + shape.width / 2,
+                    y: shape.y + shape.height / 2,
+                    textAnchor: 'middle',
+                    dominantBaseline: 'middle',
+                    fontSize: '14px',
+                    fill: '#374151',
+                    pointerEvents: 'none'
+                }, shape.text || t('defaultItemName'))
+            ]);
+        }
+        
+        // --- TEXT COMPONENT ---
+        function TextElement({ textElement, isSelected, onSelect, onMove }) {
+            const handleMouseDown = (e) => {
+                if (e.button !== 0) return;
+                e.preventDefault();
+                onSelect(textElement.id);
+                
+                const rect = e.currentTarget.ownerSVGElement.getBoundingClientRect();
+                const startX = e.clientX - rect.left - textElement.x;
+                const startY = e.clientY - rect.top - textElement.y;
+                
+                const handleMouseMove = (e) => {
+                    const newX = e.clientX - rect.left - startX;
+                    const newY = e.clientY - rect.top - startY;
+                    onMove(textElement.id, newX, newY);
+                };
+                
+                const handleMouseUp = () => {
+                    document.removeEventListener('mousemove', handleMouseMove);
+                    document.removeEventListener('mouseup', handleMouseUp);
+                };
+                
+                document.addEventListener('mousemove', handleMouseMove);
+                document.addEventListener('mouseup', handleMouseUp);
+            };
+            
+            return e('text', {
+                key: textElement.id,
+                x: textElement.x,
+                y: textElement.y,
+                fontSize: '16px',
+                fill: '#374151',
+                onMouseDown: handleMouseDown,
+                stroke: isSelected ? '#3b82f6' : 'none',
+                strokeWidth: isSelected ? 1 : 0,
+                style: { cursor: 'move' }
+            }, textElement.text || t('defaultText'));
+        }
+        
+        // --- LINE COMPONENT ---
+        function Line({ line, isSelected, onSelect }) {
+            const strokeWidth = LINE_STROKES[line.type] || 2;
+            const strokeDasharray = line.type === EcoLineType.Weak ? '5,5' : 
+                                   line.type === EcoLineType.Stressful ? '3,3' : 'none';
+            const stroke = line.type === EcoLineType.Stressful ? '#ef4444' : '#374151';
+            
+            return e('line', {
+                key: line.id,
+                x1: line.x1,
+                y1: line.y1,
+                x2: line.x2,
+                y2: line.y2,
+                stroke: isSelected ? '#3b82f6' : stroke,
+                strokeWidth: isSelected ? strokeWidth + 1 : strokeWidth,
+                strokeDasharray: strokeDasharray,
+                onClick: () => onSelect(line.id),
+                style: { cursor: 'pointer' }
+            });
+        }
+        
+        // --- CANVAS COMPONENT ---
+        function Canvas({ selectedTool, selectedElement, onElementSelect, shapes, setShapes, textElements, setTextElements, lines, setLines }) {
+            const svgRef = useRef(null);
+            
+            const handleCanvasClick = (e) => {
+                if (selectedTool === 'select') return;
+                
+                const rect = svgRef.current.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                if (selectedTool === 'item') {
+                    const newShape = {
+                        id: generateId(),
+                        type: EcoShapeType.Item,
+                        x: x - SHAPE_SIZES.default.width / 2,
+                        y: y - SHAPE_SIZES.default.height / 2,
+                        width: SHAPE_SIZES.default.width,
+                        height: SHAPE_SIZES.default.height,
+                        text: t('defaultItemName')
+                    };
+                    setShapes(prev => [...prev, newShape]);
+                } else if (selectedTool === 'text') {
+                    const newText = {
+                        id: generateId(),
+                        x: x,
+                        y: y,
+                        text: t('defaultText')
+                    };
+                    setTextElements(prev => [...prev, newText]);
+                }
+            };
+            
+            const handleShapeMove = (id, newX, newY) => {
+                setShapes(prev => prev.map(shape => 
+                    shape.id === id ? { ...shape, x: newX, y: newY } : shape
+                ));
+            };
+            
+            const handleTextMove = (id, newX, newY) => {
+                setTextElements(prev => prev.map(text => 
+                    text.id === id ? { ...text, x: newX, y: newY } : text
+                ));
+            };
+            
+            return e('div', { className: 'flex-1 overflow-hidden' }, [
+                e('svg', {
+                    key: 'svg',
+                    ref: svgRef,
+                    width: '100%',
+                    height: '600px',
+                    viewBox: '0 0 1200 800',
+                    className: 'border border-gray-300 bg-white',
+                    onClick: handleCanvasClick
+                }, [
+                    // Background
+                    e('rect', {
+                        key: 'background',
+                        width: '100%',
+                        height: '100%',
+                        fill: 'white'
+                    }),
+                    
+                    // Lines
+                    ...lines.map(line => 
+                        e(Line, {
+                            key: line.id,
+                            line: line,
+                            isSelected: selectedElement === line.id,
+                            onSelect: onElementSelect
+                        })
+                    ),
+                    
+                    // Shapes
+                    ...shapes.map(shape => 
+                        e(Shape, {
+                            key: shape.id,
+                            shape: shape,
+                            isSelected: selectedElement === shape.id,
+                            onSelect: onElementSelect,
+                            onMove: handleShapeMove
+                        })
+                    ),
+                    
+                    // Text elements
+                    ...textElements.map(textElement => 
+                        e(TextElement, {
+                            key: textElement.id,
+                            textElement: textElement,
+                            isSelected: selectedElement === textElement.id,
+                            onSelect: onElementSelect,
+                            onMove: handleTextMove
+                        })
+                    )
+                ])
+            ]);
+        }
+        
+        // --- MAIN APP COMPONENT ---
+        function App() {
+            console.log('App component rendering...');
+            
+            const [selectedTool, setSelectedTool] = useState('select');
+            const [selectedElement, setSelectedElement] = useState(null);
+            const [shapes, setShapes] = useState([]);
+            const [textElements, setTextElements] = useState([]);
+            const [lines, setLines] = useState([]);
+            
+            const handleSave = () => {
+                const svgContent = `<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1200" height="800" viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+  <rect width="100%" height="100%" fill="white"/>
+  ${lines.map(line => {
+    const strokeWidth = LINE_STROKES[line.type] || 2;
+    const strokeDasharray = line.type === EcoLineType.Weak ? '5,5' : 
+                           line.type === EcoLineType.Stressful ? '3,3' : 'none';
+    const stroke = line.type === EcoLineType.Stressful ? '#ef4444' : '#374151';
+    return `<line x1="${line.x1}" y1="${line.y1}" x2="${line.x2}" y2="${line.y2}" stroke="${stroke}" stroke-width="${strokeWidth}" stroke-dasharray="${strokeDasharray}"/>`;
+  }).join('')}
+  ${shapes.map(shape => 
+    `<g><rect x="${shape.x}" y="${shape.y}" width="${shape.width}" height="${shape.height}" fill="white" stroke="#374151" stroke-width="1" rx="8"/><text x="${shape.x + shape.width/2}" y="${shape.y + shape.height/2}" text-anchor="middle" dominant-baseline="middle" font-size="14px" fill="#374151">${shape.text || t('defaultItemName')}</text></g>`
+  ).join('')}
+  ${textElements.map(text => 
+    `<text x="${text.x}" y="${text.y}" font-size="16px" fill="#374151">${text.text || t('defaultText')}</text>`
+  ).join('')}
+</svg>`;
+                downloadSVG(svgContent);
+            };
+            
+            const handleElementSelect = (id) => {
+                setSelectedElement(id);
+            };
+            
+            return e('div', { 
+                className: 'flex flex-col h-screen',
                 style: { minHeight: '100vh' }
             }, [
-                e('h1', { key: 'title', className: 'text-3xl font-bold mb-4' }, 'かんたんエコマップ - テスト'),
-                e('p', { key: 'desc', className: 'mb-4' }, 'アプリが正常に動作しています！'),
-                e('button', {
-                    key: 'btn',
-                    className: 'bg-blue-500 text-white px-4 py-2 rounded',
-                    onClick: () => setCount(count + 1)
-                }, `クリック回数: ${count}`)
+                e(Header, {
+                    key: 'header',
+                    onSave: handleSave,
+                    selectedTool: selectedTool,
+                    onToolChange: setSelectedTool
+                }),
+                
+                e(Canvas, {
+                    key: 'canvas',
+                    selectedTool: selectedTool,
+                    selectedElement: selectedElement,
+                    onElementSelect: handleElementSelect,
+                    shapes: shapes,
+                    setShapes: setShapes,
+                    textElements: textElements,
+                    setTextElements: setTextElements,
+                    lines: lines,
+                    setLines: setLines
+                })
             ]);
         }
         
