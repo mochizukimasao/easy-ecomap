@@ -540,24 +540,24 @@
         const getToolHint = (tool, isDrawing) => {
           const hints = {
             ja: {
-              select: 'タップで選択、ドラッグで移動、空白をドラッグで範囲選択',
-              text: 'タップしてテキストを配置、ダブルタップで編集',
-              shape: 'タップして項目を配置、ダブルタップで名前を編集',
+              select: 'オブジェクトをタップで選択、ドラッグで移動、空白をドラッグで範囲選択',
+              text: 'タップでテキストを配置、既存テキストをダブルタップで編集',
+              shape: 'タップで項目を配置、既存項目をダブルタップで名前を編集',
               eraser: '削除したいオブジェクトや線をタップ',
-              Strong: isDrawing ? '終了点をタップして線を完成 (Escapeでキャンセル)' : '開始点をタップして強い線の描画を開始',
-              Normal: isDrawing ? '終了点をタップして線を完成 (Escapeでキャンセル)' : '開始点をタップして普通の線の描画を開始',
-              Weak: isDrawing ? '終了点をタップして線を完成 (Escapeでキャンセル)' : '開始点をタップして希薄な線の描画を開始',
-              Stressful: isDrawing ? '終了点をタップして線を完成 (Escapeでキャンセル)' : '開始点をタップしてストレス線の描画を開始'
+              Strong: isDrawing ? '終了点をタップして線を完成 (Escapeでキャンセル)' : '開始点をタップ（オブジェクト上でも可）、次に終了点をタップ',
+              Normal: isDrawing ? '終了点をタップして線を完成 (Escapeでキャンセル)' : '開始点をタップ（オブジェクト上でも可）、次に終了点をタップ',
+              Weak: isDrawing ? '終了点をタップして線を完成 (Escapeでキャンセル)' : '開始点をタップ（オブジェクト上でも可）、次に終了点をタップ',
+              Stressful: isDrawing ? '終了点をタップして線を完成 (Escapeでキャンセル)' : '開始点をタップ（オブジェクト上でも可）、次に終了点をタップ'
             },
             en: {
-              select: 'Tap to select, drag to move, drag in empty area for selection box',
-              text: 'Tap to place text, double-tap to edit',
-              shape: 'Tap to place item, double-tap to edit name',
+              select: 'Tap objects to select, drag to move, drag empty area for selection box',
+              text: 'Tap to place text, double-tap existing text to edit',
+              shape: 'Tap to place item, double-tap existing item to edit name',
               eraser: 'Tap objects or lines to delete',
-              Strong: isDrawing ? 'Tap end point to complete line (Escape to cancel)' : 'Tap to start drawing strong line',
-              Normal: isDrawing ? 'Tap end point to complete line (Escape to cancel)' : 'Tap to start drawing normal line',
-              Weak: isDrawing ? 'Tap end point to complete line (Escape to cancel)' : 'Tap to start drawing weak line',
-              Stressful: isDrawing ? 'Tap end point to complete line (Escape to cancel)' : 'Tap to start drawing stress line'
+              Strong: isDrawing ? 'Tap end point to complete line (Escape to cancel)' : 'Tap start point (can be on object), then tap end point',
+              Normal: isDrawing ? 'Tap end point to complete line (Escape to cancel)' : 'Tap start point (can be on object), then tap end point',
+              Weak: isDrawing ? 'Tap end point to complete line (Escape to cancel)' : 'Tap start point (can be on object), then tap end point',
+              Stressful: isDrawing ? 'Tap end point to complete line (Escape to cancel)' : 'Tap start point (can be on object), then tap end point'
             }
           };
           return hints[language]?.[tool] || hints.en[tool] || '';
@@ -812,8 +812,8 @@
               const clickedLine = !clickedShape && !clickedText ? findLineAt(pos) : null;
               const clickedElement = clickedShape || clickedText || clickedLine;
 
-              // オブジェクトがクリックされた場合の選択処理
-              if (clickedElement && activeTool !== 'eraser') {
+              // 選択ツールの場合のみオブジェクト選択処理
+              if (clickedElement && activeTool === 'select') {
                   const isSelected = selectedElementIds.includes(clickedElement.id);
                   
                   // 選択状態を更新
@@ -823,19 +823,14 @@
                       setSelectedElementIds([clickedElement.id]);
                   }
                   
-                  // 選択ツールの場合はドラッグ準備
-                  if (activeTool === 'select') {
-                      dragElementStartPosRef.current.clear();
-                      const elementIdsToDrag = e.shiftKey ? 
-                          (isSelected ? selectedElementIds.filter(id => id !== clickedElement.id) : [...selectedElementIds, clickedElement.id]) : 
-                          [clickedElement.id];
-                      const elementsToDrag = [...canvasState.shapes, ...canvasState.texts].filter(el => elementIdsToDrag.includes(el.id));
-                      elementsToDrag.forEach(el => dragElementStartPosRef.current.set(el.id, {x: el.x, y: el.y}));
-                      return; // 選択ツールの場合は以下の処理をスキップ
-                  }
-                  
-                  // 他のツールの場合、オブジェクトを選択したら処理を終了（ツール固有の動作は行わない）
-                  return;
+                  // ドラッグ準備
+                  dragElementStartPosRef.current.clear();
+                  const elementIdsToDrag = e.shiftKey ? 
+                      (isSelected ? selectedElementIds.filter(id => id !== clickedElement.id) : [...selectedElementIds, clickedElement.id]) : 
+                      [clickedElement.id];
+                  const elementsToDrag = [...canvasState.shapes, ...canvasState.texts].filter(el => elementIdsToDrag.includes(el.id));
+                  elementsToDrag.forEach(el => dragElementStartPosRef.current.set(el.id, {x: el.x, y: el.y}));
+                  return; // 選択ツールの場合は以下の処理をスキップ
               }
 
               if (activeTool === 'eraser') {
@@ -891,6 +886,9 @@
                   // 空白エリアをクリックした場合は選択解除または矩形選択開始
                   setSelectedElementIds([]);
                   setSelectionBox({x: pos.x, y: pos.y, width: 0, height: 0});
+              } else if (activeTool !== 'select' && activeTool !== 'eraser') {
+                  // 選択ツール以外の場合は選択を解除
+                  setSelectedElementIds([]);
               }
           }, [activeTool, canvasState, drawingLine, editingTextId, editingShapeId, selectedElementIds, commitCanvasState, t, fontSize]);
 
