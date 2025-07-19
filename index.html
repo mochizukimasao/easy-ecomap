@@ -812,26 +812,30 @@
               const clickedLine = !clickedShape && !clickedText ? findLineAt(pos) : null;
               const clickedElement = clickedShape || clickedText || clickedLine;
 
-              // オブジェクトがクリックされた場合は、ツールに関係なく選択
+              // オブジェクトがクリックされた場合の選択処理
               if (clickedElement && activeTool !== 'eraser') {
                   const isSelected = selectedElementIds.includes(clickedElement.id);
+                  
+                  // 選択状態を更新
                   if (e.shiftKey) {
                       setSelectedElementIds(prev => isSelected ? prev.filter(id => id !== clickedElement.id) : [...prev, clickedElement.id]);
                   } else if (!isSelected) {
                       setSelectedElementIds([clickedElement.id]);
                   }
                   
-                  // 選択ツール以外の場合は、選択後にツール固有の動作を実行
-                  if (activeTool !== 'select') {
-                      // ツール固有の処理を続行
-                  } else {
-                      // 選択ツールの場合はドラッグの準備
+                  // 選択ツールの場合はドラッグ準備
+                  if (activeTool === 'select') {
                       dragElementStartPosRef.current.clear();
-                      const elementIdsToDrag = e.shiftKey ? (isSelected ? selectedElementIds.filter(id => id !== clickedElement.id) : [...selectedElementIds, clickedElement.id]) : [clickedElement.id];
+                      const elementIdsToDrag = e.shiftKey ? 
+                          (isSelected ? selectedElementIds.filter(id => id !== clickedElement.id) : [...selectedElementIds, clickedElement.id]) : 
+                          [clickedElement.id];
                       const elementsToDrag = [...canvasState.shapes, ...canvasState.texts].filter(el => elementIdsToDrag.includes(el.id));
                       elementsToDrag.forEach(el => dragElementStartPosRef.current.set(el.id, {x: el.x, y: el.y}));
-                      return; // 早期リターンで以下の処理をスキップ
+                      return; // 選択ツールの場合は以下の処理をスキップ
                   }
+                  
+                  // 他のツールの場合、オブジェクトを選択したら処理を終了（ツール固有の動作は行わない）
+                  return;
               }
 
               if (activeTool === 'eraser') {
@@ -960,7 +964,8 @@
                   setDrawingLine(prev => prev ? {...prev, end: pos} : null);
               } else if (selectionBox) {
                   setSelectionBox({x: Math.min(dragStartPosRef.current.x, pos.x), y: Math.min(dragStartPosRef.current.y, pos.y), width: Math.abs(dragStartPosRef.current.x - pos.x), height: Math.abs(dragStartPosRef.current.y - pos.y) });
-              } else if (selectedElementIds.length > 0 && dragElementStartPosRef.current.size > 0 && activeTool === 'select') {
+              } else if (dragElementStartPosRef.current.size > 0 && activeTool === 'select') {
+                  // 選択されたオブジェクトを移動
                   setCanvasState(prev => {
                       const newShapes = prev.shapes.map(s => {
                           const startPos = dragElementStartPosRef.current.get(s.id);
@@ -985,12 +990,19 @@
           };
 
           const handleTouchStart = useCallback((e) => {
-              // デフォルトのタッチ動作を部分的に防止
-              if (Object.values(EcoLineType).includes(activeTool) || activeTool === 'shape' || activeTool === 'text') {
+              const touch = e.touches[0];
+              const pos = getSVGPoint(touch);
+              touchStartTimeRef.current = Date.now();
+              
+              // オブジェクトがある場合や特定のツールの場合はデフォルト動作を防止
+              const clickedShape = findShapeAt(pos);
+              const clickedText = findTextAt(pos);
+              const clickedLine = !clickedShape && !clickedText ? findLineAt(pos) : null;
+              const clickedElement = clickedShape || clickedText || clickedLine;
+              
+              if (clickedElement || Object.values(EcoLineType).includes(activeTool) || activeTool === 'shape' || activeTool === 'text') {
                   e.preventDefault();
               }
-              const touch = e.touches[0];
-              touchStartTimeRef.current = Date.now();
               
               // 長押し検出のタイマーを設定
               longPressTimerRef.current = setTimeout(() => {
@@ -1004,6 +1016,11 @@
               if (longPressTimerRef.current) {
                   clearTimeout(longPressTimerRef.current);
                   longPressTimerRef.current = null;
+              }
+              
+              // ドラッグ中や特定の操作中はスクロールを防止
+              if (isDraggingRef.current && (dragElementStartPosRef.current.size > 0 || drawingLine || selectionBox || resizingState || lineHandleDragState)) {
+                  e.preventDefault();
               }
               
               const touch = e.touches[0];
@@ -1024,7 +1041,7 @@
           }, []);
 
           const handleMouseUp = useCallback((e) => {
-              if (resizingState || lineHandleDragState || (isDraggingRef.current && activeTool === 'select' && dragElementStartPosRef.current.size > 0)) {
+              if (resizingState || lineHandleDragState || (isDraggingRef.current && dragElementStartPosRef.current.size > 0)) {
                   commitCanvasState(canvasState);
               }
               if (selectionBox) {
