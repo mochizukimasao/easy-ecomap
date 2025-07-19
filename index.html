@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>かんたんエコマップ - 中間版</title>
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>かんたんエコマップ (Easy Ecomap)</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvg/lib/umd.js"></script>
     <style>
       body {
@@ -14,431 +14,1235 @@
         -moz-osx-font-smoothing: grayscale;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
       }
+      /* Custom scrollbar for foreignObject textarea */
+      textarea::-webkit-scrollbar {
+        width: 8px;
+      }
+      textarea::-webkit-scrollbar-track {
+        background: #f1f1f1;
+      }
+      textarea::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 4px;
+      }
+      textarea::-webkit-scrollbar-thumb:hover {
+        background: #555;
+      }
       .resize-handle {
         fill: black;
         stroke: white;
         stroke-width: 2px;
       }
+      .line-handle {
+        fill: #2563eb; /* blue-600 */
+        stroke: white;
+        stroke-width: 2px;
+        cursor: move;
+      }
+      .cursor-nwse-resize { cursor: nwse-resize; }
+      .cursor-nesw-resize { cursor: nesw-resize; }
+      .cursor-ns-resize { cursor: ns-resize; }
+      .cursor-ew-resize { cursor: ew-resize; }
+      
+      /* Custom scrollbar for horizontal scrolling */
+      .scrollbar-thin::-webkit-scrollbar {
+        height: 6px;
+      }
+      .scrollbar-thin::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 3px;
+      }
+      .scrollbar-thin::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 3px;
+      }
+      .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+      }
+      .scrollbar-thumb-gray-300::-webkit-scrollbar-thumb {
+        background: #d1d5db;
+      }
+      .scrollbar-track-gray-100::-webkit-scrollbar-track {
+        background: #f3f4f6;
+      }
+      
+      /* Line drawing feedback */
+      .line-drawing-mode {
+        background: rgba(59, 130, 246, 0.1) !important;
+      }
+      .line-start-point {
+        fill: #3b82f6;
+        stroke: white;
+        stroke-width: 3px;
+      }
     </style>
+<link rel="stylesheet" href="/index.css">
 </head>
 <body class="bg-white">
     <div id="root"></div>
-    
-    <script>
-        console.log('Script starting...');
-        console.log('React:', typeof React);
-        console.log('ReactDOM:', typeof ReactDOM);
+
+    <script type="text/javascript">
+      const { useState, useRef, useCallback, useEffect, createContext, useContext } = React;
+
+      // --- ENUMS ---
+      const EcoShapeType = {
+        Item: 'Item',
+      };
+
+      const EcoLineType = {
+        Strong: 'Strong',
+        Normal: 'Normal',
+        Weak: 'Weak',
+        Stressful: 'Stressful',
+      };
+
+      // --- CONSTANTS ---
+      const SHAPE_SIZES = {
+        default: { width: 160, height: 50 },
+      };
+      const MIN_SHAPE_SIZE = { width: 40, height: 30 };
+      const TEXT_SIZES = {
+        default: { width: 150, height: 40 },
+      };
+      const FONT_SIZES = {
+        small: 12,
+        medium: 16,
+        large: 20,
+      };
+      const LINE_STROKES = {
+        [EcoLineType.Strong]: 4,
+        [EcoLineType.Normal]: 2,
+        [EcoLineType.Weak]: 2,
+        [EcoLineType.Stressful]: 2,
+      };
+      const GRID_SIZE = 20;
+
+      // --- i18n ---
+      const locales = {
+        ja: {
+          name: '日本語',
+          headerTitle: 'かんたんエコマップ',
+          save: '保存',
+          loadSVG: '読込',
+          undo: '元に戻す',
+          redo: 'やり直す',
+          toggleGrid: 'グリッド',
+          language: '言語',
+          select: '選択',
+          text: 'テキスト',
+          addItem: '項目を追加',
+          eraser: '消しゴム',
+          strongConnection: '強い・肯定的',
+          normalConnection: '普通',
+          weakConnection: '希薄・疎遠',
+          stressfulConnection: 'ストレス・葛藤',
+          fontSize: '文字サイズ',
+          fontSmall: '小',
+          fontMedium: '中',
+          fontLarge: '大',
+          enterName: '名称を入力してください:',
+          defaultItemName: '',
+          defaultText: 'テキストを入力',
+          loading: '読み込み中...',
+          errorLoadingFile: 'ファイルの読み込みに失敗しました。有効なエコマップSVGファイルを選択してください。',
+          saveOptions: '保存オプション',
+          fileFormat: 'ファイル形式',
+          padding: '余白 (px)',
+          transparentBackground: '背景を透過する',
+          cancel: 'キャンセル',
+          confirmSave: '保存する',
+          errorSavingPng: 'PNGの保存に失敗しました。画像変換中にエラーが発生しました。'
+        },
+        en: {
+          name: 'English',
+          headerTitle: 'Easy Ecomap',
+          save: 'Save',
+          loadSVG: 'Load',
+          undo: 'Undo',
+          redo: 'Redo',
+          toggleGrid: 'Grid',
+          language: 'Language',
+          select: 'Select',
+          text: 'Text',
+          addItem: 'Add Item',
+          eraser: 'Eraser',
+          strongConnection: 'Strong/Positive',
+          normalConnection: 'Normal',
+          weakConnection: 'Weak/Distant',
+          stressfulConnection: 'Stressful/Conflict',
+          fontSize: 'Font Size',
+          fontSmall: 'Small',
+          fontMedium: 'Medium',
+          fontLarge: 'Large',
+          enterName: 'Enter name:',
+          defaultItemName: '',
+          defaultText: 'Enter text',
+          loading: 'Loading...',
+          errorLoadingFile: 'Failed to load file. Please select a valid Ecomap SVG file.',
+          saveOptions: 'Save Options',
+          fileFormat: 'File Format',
+          padding: 'Padding (px)',
+          transparentBackground: 'Transparent Background',
+          cancel: 'Cancel',
+          confirmSave: 'Save',
+          errorSavingPng: 'Failed to save PNG. There was an error converting the image.'
+        },
+      };
+
+      // --- CONTEXT ---
+      const LanguageContext = createContext();
+
+      const LanguageProvider = ({ children }) => {
+        const [language, setLanguage] = useState('ja');
+        const t = (key) => locales[language][key] || locales.en[key];
+        return React.createElement(LanguageContext.Provider, { value: { language, setLanguage, t } }, children);
+      };
+
+      const useLanguage = () => useContext(LanguageContext);
+
+      // --- ICONS ---
+      const e = React.createElement;
+      const SelectIcon = () => e('svg',{xmlns:'http://www.w3.org/2000/svg',width:24,height:24,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},e('path',{d:'M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z'}),e('path',{d:'M13 13l6 6'}));
+      const TextIcon = () => e('svg',{xmlns:"http://www.w3.org/2000/svg", width:24, height:24, viewBox:"0 0 24 24", fill:"none", stroke:"currentColor", strokeWidth:2, strokeLinecap:"round", strokeLinejoin:"round"}, e('path', {d:"M7 20l5-16 5 16"}), e('path', {d:"M8 14h8"}));
+      const ItemIcon = () => e('svg',{width:24,height:24,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'}, e('rect', {x:3, y:8, width:18, height:8, rx:2}));
+      const EraserIcon = () => e('svg',{xmlns:"http://www.w3.org/2000/svg",width:24,height:24,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2,strokeLinecap:"round",strokeLinejoin:"round"},e('path',{d:"m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"}),e('path',{d:"M22 21H7"}),e('path',{d:"m5 12 5 5"}));
+      const StrongLineIcon = () => e('svg',{width:24,height:24,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor'},e('line',{x1:2,y1:12,x2:22,y2:12,strokeWidth:4}));
+      const NormalLineIcon = () => e('svg',{width:24,height:24,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor'},e('line',{x1:2,y1:12,x2:22,y2:12,strokeWidth:2}));
+      const WeakLineIcon = () => e('svg',{width:24,height:24,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor'},e('line',{x1:2,y1:12,x2:22,y2:12,strokeWidth:2,strokeDasharray:'4 4'}));
+      const StressfulLineIcon = () => e('svg',{width:24,height:24,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},e('path',{d:'M2 12l4 4l4-8l4 8l4-4l4 4'}));
+      const UndoIcon = () => e('svg',{xmlns:"http://www.w3.org/2000/svg",width:20,height:20,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2,strokeLinecap:"round",strokeLinejoin:"round"},e('path',{d:"M3 7v6h6"}),e('path',{d:"M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"}));
+      const RedoIcon = () => e('svg',{xmlns:"http://www.w3.org/2000/svg",width:20,height:20,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2,strokeLinecap:"round",strokeLinejoin:"round"},e('path',{d:"M21 7v6h-6"}),e('path',{d:"M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3L21 13"}));
+
+
+      // --- COMPONENTS ---
+      const ShapeComponent = ({ shape, isSelected, onDoubleClick, isEditing, onTextChange, activeTool }) => {
+        const { id, x, y, width, height, text, fontSize } = shape;
+        const strokeColor = 'black';
+        const strokeWidth = isSelected ? 3 : 2;
+        const shapeTextareaRef = useRef(null);
         
-        const { useState, useRef, useCallback } = React;
-        const e = React.createElement;
-        
-        // --- CONSTANTS ---
-        const EcoShapeType = {
-            Item: 'Item',
-        };
-        
-        const EcoLineType = {
-            Strong: 'Strong',
-            Normal: 'Normal',
-            Weak: 'Weak',
-            Stressful: 'Stressful',
-        };
-        
-        const SHAPE_SIZES = {
-            default: { width: 160, height: 50 },
-        };
-        
-        const TEXT_SIZES = {
-            default: { width: 150, height: 40 },
-        };
-        
-        const LINE_STROKES = {
-            [EcoLineType.Strong]: 4,
-            [EcoLineType.Normal]: 2,
-            [EcoLineType.Weak]: 2,
-            [EcoLineType.Stressful]: 2,
-        };
-        
-        // --- SIMPLE LOCALIZATION ---
-        const t = (key) => {
-            const texts = {
-                headerTitle: 'かんたんエコマップ - 中間版',
-                save: '保存',
-                select: '選択',
-                text: 'テキスト',
-                addItem: '項目を追加',
-                strongConnection: '強い',
-                normalConnection: '普通',
-                weakConnection: '弱い',
-                stressfulConnection: 'ストレス',
-                defaultItemName: '新しい項目',
-                defaultText: 'テキストを入力',
-            };
-            return texts[key] || key;
-        };
-        
-        // --- UTILITY FUNCTIONS ---
-        const generateId = () => Math.random().toString(36).substr(2, 9);
-        
-        const downloadSVG = (svgContent, filename = 'ecomap.svg') => {
-            const blob = new Blob([svgContent], { type: 'image/svg+xml' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        };
-        
-        // --- HEADER COMPONENT ---
-        function Header({ onSave, selectedTool, onToolChange }) {
-            console.log('Header component rendering...');
-            
-            return e('div', { 
-                className: 'bg-blue-600 text-white p-4 shadow-md'
-            }, [
-                e('div', { 
-                    key: 'container',
-                    className: 'flex items-center justify-between'
-                }, [
-                    e('h1', { 
-                        key: 'title',
-                        className: 'text-2xl font-bold'
-                    }, t('headerTitle')),
-                    
-                    // Simple toolbar
-                    e('div', { 
-                        key: 'toolbar',
-                        className: 'flex gap-2'
-                    }, [
-                        e('button', {
-                            key: 'select',
-                            className: `px-3 py-2 rounded ${selectedTool === 'select' ? 'bg-blue-800' : 'bg-blue-500 hover:bg-blue-700'}`,
-                            onClick: () => onToolChange('select')
-                        }, t('select')),
-                        
-                        e('button', {
-                            key: 'text',
-                            className: `px-3 py-2 rounded ${selectedTool === 'text' ? 'bg-blue-800' : 'bg-blue-500 hover:bg-blue-700'}`,
-                            onClick: () => onToolChange('text')
-                        }, t('text')),
-                        
-                        e('button', {
-                            key: 'item',
-                            className: `px-3 py-2 rounded ${selectedTool === 'item' ? 'bg-blue-800' : 'bg-blue-500 hover:bg-blue-700'}`,
-                            onClick: () => onToolChange('item')
-                        }, t('addItem')),
-                        
-                        e('button', {
-                            key: 'strong',
-                            className: `px-3 py-2 rounded ${selectedTool === 'strong' ? 'bg-blue-800' : 'bg-blue-500 hover:bg-blue-700'}`,
-                            onClick: () => onToolChange('strong')
-                        }, t('strongConnection')),
-                        
-                        e('button', {
-                            key: 'normal',
-                            className: `px-3 py-2 rounded ${selectedTool === 'normal' ? 'bg-blue-800' : 'bg-blue-500 hover:bg-blue-700'}`,
-                            onClick: () => onToolChange('normal')
-                        }, t('normalConnection')),
-                        
-                        e('button', {
-                            key: 'save',
-                            className: 'px-4 py-2 bg-green-500 hover:bg-green-700 rounded',
-                            onClick: onSave
-                        }, t('save'))
-                    ])
-                ])
-            ]);
+        let cursorClass = 'cursor-pointer';
+        if (Object.values(EcoLineType).includes(activeTool)) {
+            cursorClass = 'cursor-crosshair';
         }
-        
-        // --- SHAPE COMPONENT ---
-        function Shape({ shape, isSelected, onSelect, onMove }) {
-            const handleMouseDown = (e) => {
-                if (e.button !== 0) return;
-                e.preventDefault();
-                onSelect(shape.id);
-                
-                const rect = e.currentTarget.ownerSVGElement.getBoundingClientRect();
-                const startX = e.clientX - rect.left - shape.x;
-                const startY = e.clientY - rect.top - shape.y;
-                
-                const handleMouseMove = (e) => {
-                    const newX = e.clientX - rect.left - startX;
-                    const newY = e.clientY - rect.top - startY;
-                    onMove(shape.id, newX, newY);
-                };
-                
-                const handleMouseUp = () => {
-                    document.removeEventListener('mousemove', handleMouseMove);
-                    document.removeEventListener('mouseup', handleMouseUp);
-                };
-                
-                document.addEventListener('mousemove', handleMouseMove);
-                document.addEventListener('mouseup', handleMouseUp);
-            };
-            
-            return e('g', { key: shape.id }, [
-                e('rect', {
-                    key: 'rect',
-                    x: shape.x,
-                    y: shape.y,
-                    width: shape.width,
-                    height: shape.height,
-                    fill: 'white',
-                    stroke: isSelected ? '#3b82f6' : '#374151',
-                    strokeWidth: isSelected ? 3 : 1,
-                    rx: 8,
-                    onMouseDown: handleMouseDown,
-                    style: { cursor: 'move' }
-                }),
-                e('text', {
-                    key: 'text',
-                    x: shape.x + shape.width / 2,
-                    y: shape.y + shape.height / 2,
-                    textAnchor: 'middle',
-                    dominantBaseline: 'middle',
-                    fontSize: '14px',
-                    fill: '#374151',
-                    pointerEvents: 'none'
-                }, shape.text || t('defaultItemName'))
-            ]);
-        }
-        
-        // --- TEXT COMPONENT ---
-        function TextElement({ textElement, isSelected, onSelect, onMove }) {
-            const handleMouseDown = (e) => {
-                if (e.button !== 0) return;
-                e.preventDefault();
-                onSelect(textElement.id);
-                
-                const rect = e.currentTarget.ownerSVGElement.getBoundingClientRect();
-                const startX = e.clientX - rect.left - textElement.x;
-                const startY = e.clientY - rect.top - textElement.y;
-                
-                const handleMouseMove = (e) => {
-                    const newX = e.clientX - rect.left - startX;
-                    const newY = e.clientY - rect.top - startY;
-                    onMove(textElement.id, newX, newY);
-                };
-                
-                const handleMouseUp = () => {
-                    document.removeEventListener('mousemove', handleMouseMove);
-                    document.removeEventListener('mouseup', handleMouseUp);
-                };
-                
-                document.addEventListener('mousemove', handleMouseMove);
-                document.addEventListener('mouseup', handleMouseUp);
-            };
-            
-            return e('text', {
-                key: textElement.id,
-                x: textElement.x,
-                y: textElement.y,
-                fontSize: '16px',
-                fill: '#374151',
-                onMouseDown: handleMouseDown,
-                stroke: isSelected ? '#3b82f6' : 'none',
-                strokeWidth: isSelected ? 1 : 0,
-                style: { cursor: 'move' }
-            }, textElement.text || t('defaultText'));
-        }
-        
-        // --- LINE COMPONENT ---
-        function Line({ line, isSelected, onSelect }) {
-            const strokeWidth = LINE_STROKES[line.type] || 2;
-            const strokeDasharray = line.type === EcoLineType.Weak ? '5,5' : 
-                                   line.type === EcoLineType.Stressful ? '3,3' : 'none';
-            const stroke = line.type === EcoLineType.Stressful ? '#ef4444' : '#374151';
-            
-            return e('line', {
-                key: line.id,
-                x1: line.x1,
-                y1: line.y1,
-                x2: line.x2,
-                y2: line.y2,
-                stroke: isSelected ? '#3b82f6' : stroke,
-                strokeWidth: isSelected ? strokeWidth + 1 : strokeWidth,
-                strokeDasharray: strokeDasharray,
-                onClick: () => onSelect(line.id),
-                style: { cursor: 'pointer' }
-            });
-        }
-        
-        // --- CANVAS COMPONENT ---
-        function Canvas({ selectedTool, selectedElement, onElementSelect, shapes, setShapes, textElements, setTextElements, lines, setLines }) {
-            const svgRef = useRef(null);
-            
-            const handleCanvasClick = (e) => {
-                if (selectedTool === 'select') return;
-                
-                const rect = svgRef.current.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                
-                if (selectedTool === 'item') {
-                    const newShape = {
-                        id: generateId(),
-                        type: EcoShapeType.Item,
-                        x: x - SHAPE_SIZES.default.width / 2,
-                        y: y - SHAPE_SIZES.default.height / 2,
-                        width: SHAPE_SIZES.default.width,
-                        height: SHAPE_SIZES.default.height,
-                        text: t('defaultItemName')
-                    };
-                    setShapes(prev => [...prev, newShape]);
-                } else if (selectedTool === 'text') {
-                    const newText = {
-                        id: generateId(),
-                        x: x,
-                        y: y,
-                        text: t('defaultText')
-                    };
-                    setTextElements(prev => [...prev, newText]);
-                }
-            };
-            
-            const handleShapeMove = (id, newX, newY) => {
-                setShapes(prev => prev.map(shape => 
-                    shape.id === id ? { ...shape, x: newX, y: newY } : shape
-                ));
-            };
-            
-            const handleTextMove = (id, newX, newY) => {
-                setTextElements(prev => prev.map(text => 
-                    text.id === id ? { ...text, x: newX, y: newY } : text
-                ));
-            };
-            
-            return e('div', { className: 'flex-1 overflow-hidden' }, [
-                e('svg', {
-                    key: 'svg',
-                    ref: svgRef,
-                    width: '100%',
-                    height: '600px',
-                    viewBox: '0 0 1200 800',
-                    className: 'border border-gray-300 bg-white',
-                    onClick: handleCanvasClick
-                }, [
-                    // Background
-                    e('rect', {
-                        key: 'background',
-                        width: '100%',
-                        height: '100%',
-                        fill: 'white'
-                    }),
-                    
-                    // Lines
-                    ...lines.map(line => 
-                        e(Line, {
-                            key: line.id,
-                            line: line,
-                            isSelected: selectedElement === line.id,
-                            onSelect: onElementSelect
-                        })
-                    ),
-                    
-                    // Shapes
-                    ...shapes.map(shape => 
-                        e(Shape, {
-                            key: shape.id,
-                            shape: shape,
-                            isSelected: selectedElement === shape.id,
-                            onSelect: onElementSelect,
-                            onMove: handleShapeMove
-                        })
-                    ),
-                    
-                    // Text elements
-                    ...textElements.map(textElement => 
-                        e(TextElement, {
-                            key: textElement.id,
-                            textElement: textElement,
-                            isSelected: selectedElement === textElement.id,
-                            onSelect: onElementSelect,
-                            onMove: handleTextMove
-                        })
-                    )
-                ])
-            ]);
-        }
-        
-        // --- MAIN APP COMPONENT ---
-        function App() {
-            console.log('App component rendering...');
-            
-            const [selectedTool, setSelectedTool] = useState('select');
-            const [selectedElement, setSelectedElement] = useState(null);
-            const [shapes, setShapes] = useState([]);
-            const [textElements, setTextElements] = useState([]);
-            const [lines, setLines] = useState([]);
-            
-            const handleSave = () => {
-                const svgContent = `<?xml version="1.0" encoding="UTF-8"?>
-<svg width="1200" height="800" viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
-  <rect width="100%" height="100%" fill="white"/>
-  ${lines.map(line => {
-    const strokeWidth = LINE_STROKES[line.type] || 2;
-    const strokeDasharray = line.type === EcoLineType.Weak ? '5,5' : 
-                           line.type === EcoLineType.Stressful ? '3,3' : 'none';
-    const stroke = line.type === EcoLineType.Stressful ? '#ef4444' : '#374151';
-    return `<line x1="${line.x1}" y1="${line.y1}" x2="${line.x2}" y2="${line.y2}" stroke="${stroke}" stroke-width="${strokeWidth}" stroke-dasharray="${strokeDasharray}"/>`;
-  }).join('')}
-  ${shapes.map(shape => 
-    `<g><rect x="${shape.x}" y="${shape.y}" width="${shape.width}" height="${shape.height}" fill="white" stroke="#374151" stroke-width="1" rx="8"/><text x="${shape.x + shape.width/2}" y="${shape.y + shape.height/2}" text-anchor="middle" dominant-baseline="middle" font-size="14px" fill="#374151">${shape.text || t('defaultItemName')}</text></g>`
-  ).join('')}
-  ${textElements.map(text => 
-    `<text x="${text.x}" y="${text.y}" font-size="16px" fill="#374151">${text.text || t('defaultText')}</text>`
-  ).join('')}
-</svg>`;
-                downloadSVG(svgContent);
-            };
-            
-            const handleElementSelect = (id) => {
-                setSelectedElement(id);
-            };
-            
-            return e('div', { 
-                className: 'flex flex-col h-screen',
-                style: { minHeight: '100vh' }
-            }, [
-                e(Header, {
-                    key: 'header',
-                    onSave: handleSave,
-                    selectedTool: selectedTool,
-                    onToolChange: setSelectedTool
-                }),
-                
-                e(Canvas, {
-                    key: 'canvas',
-                    selectedTool: selectedTool,
-                    selectedElement: selectedElement,
-                    onElementSelect: handleElementSelect,
-                    shapes: shapes,
-                    setShapes: setShapes,
-                    textElements: textElements,
-                    setTextElements: setTextElements,
-                    lines: lines,
-                    setLines: setLines
+
+        useEffect(() => {
+            if (isEditing && shapeTextareaRef.current) {
+                shapeTextareaRef.current.focus();
+                shapeTextareaRef.current.select();
+            }
+        }, [isEditing]);
+
+        const handleTextareaKeyDown = (evt) => {
+            if (evt.key === 'Enter' && !evt.shiftKey && !evt.altKey && !evt.metaKey) {
+                evt.preventDefault();
+                onTextChange(id, evt.target.value, true);
+            }
+        };
+
+        const textStyle = {
+            fontFamily: 'inherit',
+            fontSize: `${fontSize || FONT_SIZES.medium}px`,
+            fontWeight: 'bold',
+            textAlign: 'center',
+            color: 'black',
+            background: 'none',
+            border: 'none',
+            outline: 'none',
+            resize: 'none',
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '4px',
+            margin: '0',
+            boxSizing: 'border-box',
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-word',
+        };
+
+        return e('g', {
+            transform: `translate(${x}, ${y})`,
+            className: cursorClass,
+            onDoubleClick: () => !isEditing && onDoubleClick(id),
+          },
+          e('rect', {
+            width, height, rx: 15, ry: 15,
+            fill: 'white', stroke: strokeColor, strokeWidth
+          }),
+          isEditing ?
+            e('foreignObject', { x: 0, y: 0, width: width, height: height },
+                e('textarea', {
+                    ref: shapeTextareaRef,
+                    value: text,
+                    onChange: (evt) => onTextChange(id, evt.target.value),
+                    onBlur: (evt) => onTextChange(id, evt.target.value, true),
+                    onKeyDown: handleTextareaKeyDown,
+                    style: textStyle
                 })
-            ]);
-        }
+            )
+            : 
+            e('foreignObject', { x: 0, y: 0, width, height, className: 'select-none' },
+                e('div', { style: textStyle }, text)
+            )
+        );
+      };
+
+      const Palette = ({ activeTool, setActiveTool, fontSize, setFontSize }) => {
+        const { t } = useLanguage();
         
-        try {
-            console.log('Getting root element...');
-            const rootElement = document.getElementById('root');
-            console.log('Root element:', rootElement);
-            
-            const root = ReactDOM.createRoot(rootElement);
-            console.log('Root created, rendering...');
-            
-            root.render(e(App));
-            console.log('Render complete!');
-        } catch (error) {
-            console.error('Error:', error);
-            document.body.innerHTML = '<div style="padding: 20px; color: red;">Error: ' + error.message + '</div>';
+        const createToolButton = (tool, isActive) => e('button', {
+          onClick: () => setActiveTool(tool.id),
+          className: `min-w-[3rem] h-10 px-3 rounded-lg transition-colors flex flex-col items-center justify-center gap-0.5 ${isActive ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'} `,
+          title: tool.label
+        }, 
+          e('div', { className: 'w-4 h-4 flex items-center justify-center' }, tool.icon),
+          e('span', { className: 'text-xs font-medium truncate' }, tool.shortLabel || tool.label)
+        );
+
+        const createFontButton = (name, size, isActive) => {
+          const fontLabel = t(`font${name.charAt(0).toUpperCase() + name.slice(1)}`);
+          const shortFontLabel = fontLabel[0];
+          return e('button', {
+            onClick: () => setFontSize(size),
+            className: `min-w-[2.5rem] h-10 px-2 rounded-lg transition-colors flex flex-col items-center justify-center gap-0.5 ${isActive ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'} `,
+            title: fontLabel
+          },
+            e('span', { className: 'text-sm font-bold leading-none' }, shortFontLabel),
+            e('span', { className: 'text-xs leading-none' }, '文字')
+          );
+        };
+        
+        const getShortLabel = (key, fallback) => {
+          const shortLabels = {
+            ja: {
+              select: '選択',
+              text: 'テキスト', 
+              addItem: '項目',
+              eraser: '消去',
+              strongConnection: '強い',
+              normalConnection: '普通',
+              weakConnection: '希薄',
+              stressfulConnection: 'ストレス'
+            },
+            en: {
+              select: 'Select',
+              text: 'Text',
+              addItem: 'Item', 
+              eraser: 'Erase',
+              strongConnection: 'Strong',
+              normalConnection: 'Normal',
+              weakConnection: 'Weak',
+              stressfulConnection: 'Stress'
+            }
+          };
+          return shortLabels[useLanguage().language]?.[key] || fallback;
+        };
+
+        const allTools = [
+          { id: 'select', icon: e(SelectIcon), label: t('select'), shortLabel: getShortLabel('select', t('select')) },
+          { id: 'text', icon: e(TextIcon), label: t('text'), shortLabel: getShortLabel('text', t('text')) },
+          { id: 'shape', icon: e(ItemIcon), label: t('addItem'), shortLabel: getShortLabel('addItem', t('addItem')) },
+          { id: 'eraser', icon: e(EraserIcon), label: t('eraser'), shortLabel: getShortLabel('eraser', t('eraser')) },
+          { id: EcoLineType.Strong, icon: e(StrongLineIcon), label: t('strongConnection'), shortLabel: getShortLabel('strongConnection', t('strongConnection')) },
+          { id: EcoLineType.Normal, icon: e(NormalLineIcon), label: t('normalConnection'), shortLabel: getShortLabel('normalConnection', t('normalConnection')) },
+          { id: EcoLineType.Weak, icon: e(WeakLineIcon), label: t('weakConnection'), shortLabel: getShortLabel('weakConnection', t('weakConnection')) },
+          { id: EcoLineType.Stressful, icon: e(StressfulLineIcon), label: t('stressfulConnection'), shortLabel: getShortLabel('stressfulConnection', t('stressfulConnection')) }
+        ];
+
+        return e('div', { className: 'absolute top-20 left-0 right-0 bg-white shadow-lg border-b border-gray-200 z-10' },
+          e('div', { className: 'flex items-center gap-2 px-4 py-2 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100' },
+            ...allTools.map(tool => createToolButton(tool, activeTool === tool.id)),
+            e('div', { className: 'w-px h-6 bg-gray-300 mx-2 flex-shrink-0' }),
+            ...Object.entries(FONT_SIZES).map(([name, size]) => createFontButton(name, size, fontSize === size))
+          )
+        );
+      };
+
+      const Header = ({ onSave, onLoadSVG, onUndo, onRedo, canUndo, canRedo, showGrid, setShowGrid }) => {
+        const { t, language, setLanguage } = useLanguage();
+        const fileInputRef = useRef(null);
+
+        const createButton = (labelOrIcon, onClick, disabled = false, title = '', isActive = false, isCompact = false) => e('button', {
+            onClick, disabled, title,
+            className: `${isCompact ? 'px-2 py-2 min-w-[2.5rem]' : 'px-3 py-2 min-w-[3rem]'} text-sm font-medium rounded-md shadow-sm border hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap ${isActive ? 'bg-blue-100 text-blue-800 border-blue-500' : 'bg-white text-gray-700 border-gray-300'} `
+          }, labelOrIcon);
+
+        return e('header', { className: 'absolute top-0 left-0 right-0 h-16 bg-white shadow-md flex items-center justify-between px-3 z-20 border-b border-gray-200' },
+          e('h1', { className: 'text-lg font-bold text-gray-800 whitespace-nowrap flex-shrink-0 mr-4' }, t('headerTitle')),
+          e('div', { className: 'flex items-center gap-2 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 pb-1' },
+            e('div', { className: 'flex items-center gap-1 flex-shrink-0' },
+              createButton(t('save'), onSave, false, t('save'), false, true),
+              createButton(t('loadSVG'), () => fileInputRef.current?.click(), false, t('loadSVG'), false, true),
+              e('input', { type: 'file', ref: fileInputRef, onChange: onLoadSVG, accept: '.svg', className: 'hidden' })
+            ),
+            e('div', { className: 'w-px h-6 bg-gray-300 flex-shrink-0' }),
+            e('div', { className: 'flex items-center gap-1 flex-shrink-0' },
+              createButton(e(UndoIcon), onUndo, !canUndo, t('undo'), false, true),
+              createButton(e(RedoIcon), onRedo, !canRedo, t('redo'), false, true)
+            ),
+            e('div', { className: 'w-px h-6 bg-gray-300 flex-shrink-0' }),
+            e('label', { className: 'flex items-center gap-2 cursor-pointer px-2 py-2 rounded-md hover:bg-gray-50 flex-shrink-0' },
+              e('input', { type: 'checkbox', checked: showGrid, onChange: (e) => setShowGrid(e.target.checked), className: 'h-4 w-4 text-blue-600 rounded focus:ring-blue-500 border-gray-300' }),
+              e('span', { className: 'text-sm font-medium text-gray-700 whitespace-nowrap' }, t('toggleGrid'))
+            ),
+            e('div', { className: 'w-px h-6 bg-gray-300 flex-shrink-0' }),
+            e('select', {
+                value: language, onChange: (e) => setLanguage(e.target.value),
+                className: "px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex-shrink-0"
+              },
+              Object.keys(locales).map(lang => e('option', { key: lang, value: lang }, locales[lang].name))
+            )
+          )
+        );
+      };
+      
+      const Canvas = ({ canvasState, onMouseDown, onMouseMove, onMouseUp, onMouseLeave, onTouchStart, onTouchMove, onTouchEnd, onDoubleClickShape, onDoubleClickText, editingTextId, onTextChange, editingShapeId, onShapeTextChange, selectedElementIds, drawingLine, selectionBox, showGrid, svgRef, activeTool, shapePreview }) => {
+        const { shapes, lines, texts, width, height } = canvasState;
+        const textareaRef = useRef(null);
+        
+        useEffect(() => {
+            if (editingTextId && textareaRef.current) {
+                textareaRef.current.focus();
+                textareaRef.current.select();
+            }
+        }, [editingTextId]);
+        
+        let cursorClass = 'cursor-default';
+        if (drawingLine || Object.values(EcoLineType).includes(activeTool) || activeTool === 'shape' || activeTool === 'text') {
+            cursorClass = 'cursor-crosshair';
+        } else if (activeTool === 'eraser') {
+            cursorClass = 'cursor-pointer';
         }
+
+        const generateZigzagPath = (start, end) => {
+            const dx = end.x - start.x, dy = end.y - start.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            const segments = Math.max(2, Math.floor(distance / 15));
+            const amplitude = 8;
+            let path = `M ${start.x} ${start.y} `;
+            for (let i = 1; i < segments; i++) {
+                const t = i / segments;
+                const x = start.x + dx * t;
+                const y = start.y + dy * t;
+                const perpDx = -dy / distance, perpDy = dx / distance;
+                const offsetX = perpDx * amplitude * (i % 2 === 0 ? 1 : -1);
+                const offsetY = perpDy * amplitude * (i % 2 === 0 ? 1 : -1);
+                path += `L ${x + offsetX} ${y + offsetY} `;
+            }
+            path += `L ${end.x} ${end.y}`;
+            return path;
+        };
+
+        const getResizeHandles = (element) => {
+            if (!element) return [];
+            const { x, y, width, height } = element;
+            const handleSize = 8;
+            const h2 = handleSize / 2;
+
+            return [
+              { id: 'top-left', x: x - h2, y: y - h2, cursor: 'cursor-nwse-resize' },
+              { id: 'top', x: x + width/2 - h2, y: y - h2, cursor: 'cursor-ns-resize' },
+              { id: 'top-right', x: x + width - h2, y: y - h2, cursor: 'cursor-nesw-resize' },
+              { id: 'left', x: x - h2, y: y + height/2 - h2, cursor: 'cursor-ew-resize' },
+              { id: 'right', x: x + width - h2, y: y + height/2 - h2, cursor: 'cursor-ew-resize' },
+              { id: 'bottom-left', x: x - h2, y: y + height - h2, cursor: 'cursor-nwse-resize' },
+              { id: 'bottom', x: x + width/2 - h2, y: y + height - h2, cursor: 'cursor-ns-resize' },
+              { id: 'bottom-right', x: x + width - h2, y: y + height - h2, cursor: 'cursor-nwse-resize' },
+            ];
+        };
+        
+        const singleSelectedElement = selectedElementIds.length === 1 ? [...shapes, ...texts].find(s => s.id === selectedElementIds[0]) : null;
+        const singleSelectedLine = selectedElementIds.length === 1 ? lines.find(l => l.id === selectedElementIds[0]) : null;
+
+        const allLines = drawingLine ? [...lines, drawingLine] : lines;
+
+        return e('svg', { ref: svgRef, className: `w-full h-full ${cursorClass}` , width, height, onMouseDown, onMouseMove, onMouseUp, onMouseLeave, onTouchStart, onTouchMove, onTouchEnd },
+            e('defs', null,
+                showGrid && e('pattern', { id: 'grid', width: GRID_SIZE, height: GRID_SIZE, patternUnits: 'userSpaceOnUse' },
+                    e('path', { d: `M ${GRID_SIZE} 0 L 0 0 0 ${GRID_SIZE}` , fill: 'none', stroke: 'rgba(0, 0, 0, 0.15)', strokeWidth: '1' })
+                )
+            ),
+            e('rect', { width: '100%', height: '100%', fill: showGrid ? 'url(#grid)' : 'white' }),
+            shapePreview && e('rect', {
+                x: shapePreview.x, y: shapePreview.y, width: shapePreview.width, height: shapePreview.height,
+                rx: 15, ry: 15,
+                fill: 'rgba(0,0,0,0.1)', stroke: 'rgba(0,0,0,0.4)', strokeWidth: 2, strokeDasharray: '5,5'
+            }),
+            allLines.map(line => {
+                const isSelected = selectedElementIds.includes(line.id);
+                const strokeWidth = LINE_STROKES[line.type] + (isSelected ? 2 : 0);
+                const strokeColor = 'black';
+                let lineCursorClass = activeTool === 'eraser' ? 'cursor-pointer' : '';
+                if (Object.values(EcoLineType).includes(activeTool)) {
+                    lineCursorClass = 'cursor-crosshair';
+                }
+
+                if (line.type === EcoLineType.Stressful) {
+                    return e('path', { key: line.id, d: generateZigzagPath(line.start, line.end), stroke: strokeColor, strokeWidth, fill: 'none', className: lineCursorClass });
+                }
+                return e('line', { key: line.id, x1: line.start.x, y1: line.start.y, x2: line.end.x, y2: line.end.y, stroke: strokeColor, strokeWidth, strokeDasharray: line.type === EcoLineType.Weak ? '5,5' : 'none', className: lineCursorClass });
+            }),
+            shapes.map(shape => e(ShapeComponent, { key: shape.id, shape, isSelected: selectedElementIds.includes(shape.id), onDoubleClick: onDoubleClickShape, isEditing: editingShapeId === shape.id, onTextChange: onShapeTextChange, activeTool })),
+            texts.map(text => {
+                const isSelected = selectedElementIds.includes(text.id);
+                const isEditing = editingTextId === text.id;
+                let elementCursorClass = 'cursor-pointer';
+                if (activeTool === 'eraser') {
+                    elementCursorClass = 'cursor-pointer';
+                } else if (Object.values(EcoLineType).includes(activeTool)) {
+                    elementCursorClass = 'cursor-crosshair';
+                }
+
+                return e('g', { key: text.id, transform: `translate(${text.x}, ${text.y})` , className: elementCursorClass },
+                    isEditing ? e('foreignObject', { x: 0, y: 0, width: text.width, height: text.height },
+                        e('textarea', {
+                            ref: textareaRef, value: text.text,
+                            onChange: (e) => onTextChange(text.id, e.target.value),
+                            onBlur: () => onTextChange(text.id, text.text, true),
+                            onKeyDown: (evt) => { if (evt.key === 'Enter' && !evt.shiftKey && !evt.altKey && !evt.metaKey) { evt.preventDefault(); onTextChange(text.id, text.text, true); }},
+                            style: { fontSize: `${text.fontSize}px` },
+                            className: "w-full h-full p-1 border border-blue-500 rounded-md resize-none bg-white text-black"
+                        })
+                    ) : e('foreignObject', { x: 0, y: 0, width: text.width, height: text.height, onDoubleClick: () => onDoubleClickText(text.id) },
+                        e('div', {
+                            style: { fontSize: `${text.fontSize}px`, border: isSelected ? '2px solid black' : '1px solid transparent', padding: isSelected ? '0px' : '1px' },
+                            className: "w-full h-full p-1 box-border break-words text-black"
+                        }, text.text)
+                    )
+                );
+            }),
+            selectionBox && e('rect', { x: selectionBox.x, y: selectionBox.y, width: selectionBox.width, height: selectionBox.height, fill: 'rgba(59, 130, 246, 0.2)', stroke: 'rgba(59, 130, 246, 0.8)', strokeWidth: '1' }),
+            drawingLine && e('circle', { cx: drawingLine.start.x, cy: drawingLine.start.y, r: 6, className: 'line-start-point' })
+        );
+      };
+
+      const ToolHint = ({ activeTool, drawingLine, t }) => {
+        const { language } = useLanguage();
+        
+        const getToolHint = (tool, isDrawing) => {
+          const hints = {
+            ja: {
+              select: 'タップで選択、ドラッグで移動、選択後の四隅をドラッグでサイズ変更',
+              text: 'タップでテキストを配置、既存テキストをダブルタップで編集',
+              shape: 'タップで項目を配置、既存項目をダブルタップで名前を編集',
+              eraser: '削除したいオブジェクトや線をタップ',
+              Strong: isDrawing ? '終了点をタップして線を完成 (Escapeでキャンセル)' : '開始点をタップ（オブジェクト上でも可）、次に終了点をタップ',
+              Normal: isDrawing ? '終了点をタップして線を完成 (Escapeでキャンセル)' : '開始点をタップ（オブジェクト上でも可）、次に終了点をタップ',
+              Weak: isDrawing ? '終了点をタップして線を完成 (Escapeでキャンセル)' : '開始点をタップ（オブジェクト上でも可）、次に終了点をタップ',
+              Stressful: isDrawing ? '終了点をタップして線を完成 (Escapeでキャンセル)' : '開始点をタップ（オブジェクト上でも可）、次に終了点をタップ'
+            },
+            en: {
+              select: 'Tap to select, drag to move, drag corners after selection to resize',
+              text: 'Tap to place text, double-tap existing text to edit',
+              shape: 'Tap to place item, double-tap existing item to edit name',
+              eraser: 'Tap objects or lines to delete',
+              Strong: isDrawing ? 'Tap end point to complete line (Escape to cancel)' : 'Tap start point (can be on object), then tap end point',
+              Normal: isDrawing ? 'Tap end point to complete line (Escape to cancel)' : 'Tap start point (can be on object), then tap end point',
+              Weak: isDrawing ? 'Tap end point to complete line (Escape to cancel)' : 'Tap start point (can be on object), then tap end point',
+              Stressful: isDrawing ? 'Tap end point to complete line (Escape to cancel)' : 'Tap start point (can be on object), then tap end point'
+            }
+          };
+          return hints[language]?.[tool] || hints.en[tool];
+        };
+
+        return e('div', { className: 'absolute bottom-3 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-75 text-white px-4 py-2 rounded-lg text-sm max-w-md text-center z-10' },
+          getToolHint(activeTool, !!drawingLine)
+        );
+      };
+
+      const SaveDialog = ({ isOpen, onClose, onSave, t }) => {
+        const [fileFormat, setFileFormat] = useState('svg');
+        const [padding, setPadding] = useState(20);
+        const [transparentBackground, setTransparentBackground] = useState(false);
+
+        if (!isOpen) return null;
+
+        return e('div', { className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50' },
+          e('div', { className: 'bg-white rounded-lg p-6 w-80 shadow-xl' },
+            e('h3', { className: 'text-lg font-semibold mb-4' }, t('saveOptions')),
+            e('div', { className: 'space-y-4' },
+              e('div', null,
+                e('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, t('fileFormat')),
+                e('select', {
+                  value: fileFormat,
+                  onChange: (e) => setFileFormat(e.target.value),
+                  className: 'w-full p-2 border border-gray-300 rounded-md'
+                },
+                  e('option', { value: 'svg' }, 'SVG'),
+                  e('option', { value: 'png' }, 'PNG')
+                )
+              ),
+              fileFormat === 'png' && e('div', null,
+                e('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, t('padding')),
+                e('input', {
+                  type: 'number',
+                  value: padding,
+                  onChange: (e) => setPadding(parseInt(e.target.value) || 0),
+                  className: 'w-full p-2 border border-gray-300 rounded-md',
+                  min: '0'
+                })
+              ),
+              fileFormat === 'png' && e('label', { className: 'flex items-center space-x-2' },
+                e('input', {
+                  type: 'checkbox',
+                  checked: transparentBackground,
+                  onChange: (e) => setTransparentBackground(e.target.checked),
+                  className: 'h-4 w-4 text-blue-600 rounded'
+                }),
+                e('span', { className: 'text-sm text-gray-700' }, t('transparentBackground'))
+              )
+            ),
+            e('div', { className: 'flex space-x-3 mt-6' },
+              e('button', {
+                onClick: onClose,
+                className: 'flex-1 px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300'
+              }, t('cancel')),
+              e('button', {
+                onClick: () => onSave(fileFormat, { padding, transparentBackground }),
+                className: 'flex-1 px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700'
+              }, t('confirmSave'))
+            )
+          )
+        );
+      };
+
+      // --- MAIN APP ---
+      const App = () => {
+        const { t } = useLanguage();
+        const [canvasState, setCanvasState] = useState({ shapes: [], lines: [], texts: [], width: 1200, height: 800 });
+        const [history, setHistory] = useState([{ shapes: [], lines: [], texts: [], width: 1200, height: 800 }]);
+        const [historyIndex, setHistoryIndex] = useState(0);
+        const [activeTool, setActiveTool] = useState('select');
+        const [fontSize, setFontSize] = useState(FONT_SIZES.medium);
+        const [selectedElementIds, setSelectedElementIds] = useState([]);
+        const [editingShapeId, setEditingShapeId] = useState(null);
+        const [editingTextId, setEditingTextId] = useState(null);
+        const [showGrid, setShowGrid] = useState(true);
+        const [drawingLine, setDrawingLine] = useState(null);
+        const [selectionBox, setSelectionBox] = useState(null);
+        const [shapePreview, setShapePreview] = useState(null);
+        const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+        const [isLoading, setIsLoading] = useState(false);
+        const svgRef = useRef();
+        const isDraggingRef = useRef(false);
+        const dragStartPosRef = useRef(null);
+        const selectedElementsStartPosRef = useRef([]);
+
+        const getSVGPoint = useCallback((clientX, clientY) => {
+            if (!svgRef.current) return { x: 0, y: 0 };
+            
+            const rect = svgRef.current.getBoundingClientRect();
+            const scaleX = canvasState.width / rect.width;
+            const scaleY = canvasState.height / rect.height;
+            
+            return {
+                x: (clientX - rect.left) * scaleX,
+                y: (clientY - rect.top) * scaleY
+            };
+        }, [canvasState.width, canvasState.height]);
+
+        const createState = useCallback((state, newState) => ({ ...state, ...newState }), []);
+
+        const updateHistory = useCallback((newState) => {
+          const newHistory = history.slice(0, historyIndex + 1);
+          newHistory.push(newState);
+          setHistory(newHistory);
+          setHistoryIndex(newHistory.length - 1);
+          setCanvasState(newState);
+        }, [history, historyIndex]);
+
+        const undo = useCallback(() => {
+          if (historyIndex > 0) {
+            const newIndex = historyIndex - 1;
+            setHistoryIndex(newIndex);
+            setCanvasState(history[newIndex]);
+            setSelectedElementIds([]);
+            setEditingShapeId(null);
+            setEditingTextId(null);
+          }
+        }, [history, historyIndex]);
+
+        const redo = useCallback(() => {
+          if (historyIndex < history.length - 1) {
+            const newIndex = historyIndex + 1;
+            setHistoryIndex(newIndex);
+            setCanvasState(history[newIndex]);
+            setSelectedElementIds([]);
+            setEditingShapeId(null);
+            setEditingTextId(null);
+          }
+        }, [history, historyIndex]);
+
+        const findElementAt = useCallback((point) => {
+          const { shapes, lines, texts } = canvasState;
+          for (let text of texts) {
+            if (point.x >= text.x && point.x <= text.x + text.width && point.y >= text.y && point.y <= text.y + text.height) {
+              return { type: 'text', element: text };
+            }
+          }
+          for (let shape of shapes) {
+            if (point.x >= shape.x && point.x <= shape.x + shape.width && point.y >= shape.y && point.y <= shape.y + shape.height) {
+              return { type: 'shape', element: shape };
+            }
+          }
+          for (let line of lines) {
+            const dist = distanceToLine(point, line.start, line.end);
+            if (dist < 10) {
+              return { type: 'line', element: line };
+            }
+          }
+          return null;
+        }, [canvasState]);
+
+        const distanceToLine = (point, lineStart, lineEnd) => {
+          const A = point.x - lineStart.x;
+          const B = point.y - lineStart.y;
+          const C = lineEnd.x - lineStart.x;
+          const D = lineEnd.y - lineStart.y;
+          
+          const dot = A * C + B * D;
+          const lenSq = C * C + D * D;
+          let param = -1;
+          if (lenSq !== 0) param = dot / lenSq;
+          
+          let xx, yy;
+          if (param < 0) {
+            xx = lineStart.x;
+            yy = lineStart.y;
+          } else if (param > 1) {
+            xx = lineEnd.x;
+            yy = lineEnd.y;
+          } else {
+            xx = lineStart.x + param * C;
+            yy = lineStart.y + param * D;
+          }
+          
+          const dx = point.x - xx;
+          const dy = point.y - yy;
+          return Math.sqrt(dx * dx + dy * dy);
+        };
+
+        const createUniqueId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+        const addShape = useCallback((position) => {
+          const id = createUniqueId();
+          const newShape = {
+            id, type: EcoShapeType.Item, x: position.x - SHAPE_SIZES.default.width / 2, y: position.y - SHAPE_SIZES.default.height / 2, 
+            width: SHAPE_SIZES.default.width, height: SHAPE_SIZES.default.height, text: t('defaultItemName'), fontSize: FONT_SIZES.medium
+          };
+          updateHistory(createState(canvasState, { shapes: [...canvasState.shapes, newShape] }));
+          setSelectedElementIds([id]);
+        }, [canvasState, updateHistory, createState, t]);
+
+        const addText = useCallback((position) => {
+          const id = createUniqueId();
+          const newText = {
+            id, x: position.x - TEXT_SIZES.default.width / 2, y: position.y - TEXT_SIZES.default.height / 2,
+            width: TEXT_SIZES.default.width, height: TEXT_SIZES.default.height, text: t('defaultText'), fontSize
+          };
+          updateHistory(createState(canvasState, { texts: [...canvasState.texts, newText] }));
+          setSelectedElementIds([id]);
+        }, [canvasState, updateHistory, createState, fontSize, t]);
+
+        const addLine = useCallback((start, end, type) => {
+          const id = createUniqueId();
+          const newLine = { id, start, end, type };
+          updateHistory(createState(canvasState, { lines: [...canvasState.lines, newLine] }));
+          setSelectedElementIds([id]);
+        }, [canvasState, updateHistory, createState]);
+
+        const deleteElement = useCallback((elementId) => {
+          const newShapes = canvasState.shapes.filter(s => s.id !== elementId);
+          const newLines = canvasState.lines.filter(l => l.id !== elementId);
+          const newTexts = canvasState.texts.filter(t => t.id !== elementId);
+          updateHistory(createState(canvasState, { shapes: newShapes, lines: newLines, texts: newTexts }));
+          setSelectedElementIds([]);
+        }, [canvasState, updateHistory, createState]);
+
+        const moveElements = useCallback((elementIds, deltaX, deltaY) => {
+          const newShapes = canvasState.shapes.map(shape => 
+            elementIds.includes(shape.id) ? { ...shape, x: shape.x + deltaX, y: shape.y + deltaY } : shape
+          );
+          const newTexts = canvasState.texts.map(text => 
+            elementIds.includes(text.id) ? { ...text, x: text.x + deltaX, y: text.y + deltaY } : text
+          );
+          const newLines = canvasState.lines.map(line => 
+            elementIds.includes(line.id) ? { 
+              ...line, 
+              start: { x: line.start.x + deltaX, y: line.start.y + deltaY },
+              end: { x: line.end.x + deltaX, y: line.end.y + deltaY }
+            } : line
+          );
+          setCanvasState(createState(canvasState, { shapes: newShapes, lines: newLines, texts: newTexts }));
+        }, [canvasState, createState]);
+
+        const handleMouseDown = useCallback((evt) => {
+          evt.preventDefault();
+          const point = getSVGPoint(evt.clientX, evt.clientY);
+          
+          if (activeTool === 'select') {
+            const elementAtPoint = findElementAt(point);
+            if (elementAtPoint) {
+              if (!selectedElementIds.includes(elementAtPoint.element.id)) {
+                setSelectedElementIds([elementAtPoint.element.id]);
+              }
+              isDraggingRef.current = true;
+              dragStartPosRef.current = point;
+              selectedElementsStartPosRef.current = selectedElementIds.map(id => {
+                const el = [...canvasState.shapes, ...canvasState.texts, ...canvasState.lines].find(e => e.id === id);
+                return el ? { id, startPos: el.x !== undefined ? { x: el.x, y: el.y } : { x: el.start.x, y: el.start.y } } : null;
+              }).filter(Boolean);
+            } else {
+              setSelectedElementIds([]);
+              setSelectionBox({ x: point.x, y: point.y, width: 0, height: 0 });
+            }
+          } else if (activeTool === 'text') {
+            addText(point);
+          } else if (activeTool === 'shape') {
+            addShape(point);
+          } else if (activeTool === 'eraser') {
+            const elementAtPoint = findElementAt(point);
+            if (elementAtPoint) {
+              deleteElement(elementAtPoint.element.id);
+            }
+          } else if (Object.values(EcoLineType).includes(activeTool)) {
+            if (!drawingLine) {
+              setDrawingLine({ start: point, end: point, type: activeTool });
+            } else {
+              addLine(drawingLine.start, point, activeTool);
+              setDrawingLine(null);
+            }
+          }
+        }, [activeTool, getSVGPoint, findElementAt, selectedElementIds, addText, addShape, deleteElement, canvasState, drawingLine, addLine]);
+
+        const handleMouseMove = useCallback((evt) => {
+          const point = getSVGPoint(evt.clientX, evt.clientY);
+          
+          if (drawingLine) {
+            setDrawingLine(prev => ({ ...prev, end: point }));
+          } else if (selectionBox) {
+            const startX = Math.min(selectionBox.x, point.x);
+            const startY = Math.min(selectionBox.y, point.y);
+            const width = Math.abs(point.x - selectionBox.x);
+            const height = Math.abs(point.y - selectionBox.y);
+            setSelectionBox({ x: startX, y: startY, width, height });
+          } else if (isDraggingRef.current && dragStartPosRef.current && selectedElementIds.length > 0) {
+            const deltaX = point.x - dragStartPosRef.current.x;
+            const deltaY = point.y - dragStartPosRef.current.y;
+            moveElements(selectedElementIds, deltaX, deltaY);
+          } else if (activeTool === 'shape' && isDraggingRef.current) {
+            const startX = Math.min(dragStartPosRef.current.x, point.x);
+            const startY = Math.min(dragStartPosRef.current.y, point.y);
+            const width = Math.abs(point.x - dragStartPosRef.current.x);
+            const height = Math.abs(point.y - dragStartPosRef.current.y);
+            setShapePreview({ x: startX, y: startY, width: Math.max(width, MIN_SHAPE_SIZE.width), height: Math.max(height, MIN_SHAPE_SIZE.height) });
+          }
+        }, [getSVGPoint, drawingLine, selectionBox, selectedElementIds, moveElements, activeTool]);
+
+        const handleMouseUp = useCallback((evt) => {
+          if (selectionBox) {
+            const selectedIds = [...canvasState.shapes, ...canvasState.texts].filter(element => {
+              const elementRight = element.x + element.width;
+              const elementBottom = element.y + element.height;
+              const boxRight = selectionBox.x + selectionBox.width;
+              const boxBottom = selectionBox.y + selectionBox.height;
+              
+              return element.x < boxRight && elementRight > selectionBox.x && element.y < boxBottom && elementBottom > selectionBox.y;
+            }).map(el => el.id);
+            setSelectedElementIds(selectedIds);
+            setSelectionBox(null);
+          } else if (isDraggingRef.current && selectedElementIds.length > 0) {
+            updateHistory(canvasState);
+          } else if (shapePreview) {
+            const id = createUniqueId();
+            const newShape = { 
+              id, type: EcoShapeType.Item, 
+              ...shapePreview, 
+              text: t('defaultItemName'), 
+              fontSize: FONT_SIZES.medium 
+            };
+            updateHistory(createState(canvasState, { shapes: [...canvasState.shapes, newShape] }));
+            setSelectedElementIds([id]);
+            setShapePreview(null);
+          }
+          
+          isDraggingRef.current = false;
+          dragStartPosRef.current = null;
+          selectedElementsStartPosRef.current = [];
+        }, [selectionBox, canvasState, selectedElementIds, updateHistory, shapePreview, createState, t]);
+
+        const handleMouseLeave = useCallback(() => {
+          setSelectionBox(null);
+          setShapePreview(null);
+          isDraggingRef.current = false;
+          dragStartPosRef.current = null;
+          selectedElementsStartPosRef.current = [];
+        }, []);
+
+        const handleTouchStart = useCallback((evt) => {
+          evt.preventDefault();
+          const touch = evt.touches[0];
+          
+          // Simple touch handling - just convert to mouse event
+          const mouseEvent = new MouseEvent('mousedown', {
+            clientX: touch.clientX,
+            clientY: touch.clientY,
+            bubbles: true,
+          });
+          Object.defineProperty(mouseEvent, 'target', { value: evt.target });
+          handleMouseDown(mouseEvent);
+        }, [handleMouseDown]);
+
+        const handleTouchMove = useCallback((evt) => {
+          evt.preventDefault();
+          const touch = evt.touches[0];
+          
+          // Simple touch handling - just convert to mouse event
+          const mouseEvent = new MouseEvent('mousemove', {
+            clientX: touch.clientX,
+            clientY: touch.clientY,
+            bubbles: true,
+          });
+          handleMouseMove(mouseEvent);
+        }, [handleMouseMove]);
+
+        const handleTouchEnd = useCallback((evt) => {
+          evt.preventDefault();
+          
+          // Simple touch handling - just convert to mouse event
+          const touch = evt.changedTouches[0];
+          const mouseEvent = new MouseEvent('mouseup', {
+            clientX: touch.clientX,
+            clientY: touch.clientY,
+            bubbles: true,
+          });
+          handleMouseUp(mouseEvent);
+        }, [handleMouseUp]);
+
+        const handleDoubleClickShape = useCallback((shapeId) => {
+          setEditingShapeId(shapeId);
+          setSelectedElementIds([]);
+        }, []);
+
+        const handleDoubleClickText = useCallback((textId) => {
+          setEditingTextId(textId);
+          setSelectedElementIds([]);
+        }, []);
+
+        const handleShapeTextChange = useCallback((shapeId, newText, shouldFinish = false) => {
+          const newShapes = canvasState.shapes.map(shape => 
+            shape.id === shapeId ? { ...shape, text: newText } : shape
+          );
+          setCanvasState(createState(canvasState, { shapes: newShapes }));
+          
+          if (shouldFinish) {
+            updateHistory(createState(canvasState, { shapes: newShapes }));
+            setEditingShapeId(null);
+          }
+        }, [canvasState, createState, updateHistory]);
+
+        const handleTextChange = useCallback((textId, newText, shouldFinish = false) => {
+          const newTexts = canvasState.texts.map(text => 
+            text.id === textId ? { ...text, text: newText } : text
+          );
+          setCanvasState(createState(canvasState, { texts: newTexts }));
+          
+          if (shouldFinish) {
+            updateHistory(createState(canvasState, { texts: newTexts }));
+            setEditingTextId(null);
+          }
+        }, [canvasState, createState, updateHistory]);
+
+        const handleSave = useCallback(async (format = 'svg', options = {}) => {
+          setSaveDialogOpen(false);
+          
+          if (format === 'svg') {
+            const svgElement = svgRef.current;
+            if (!svgElement) return;
+            
+            const svgData = new XMLSerializer().serializeToString(svgElement);
+            const blob = new Blob([svgData], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'ecomap.svg';
+            link.click();
+            URL.revokeObjectURL(url);
+          } else if (format === 'png') {
+            try {
+              const svgElement = svgRef.current;
+              if (!svgElement) return;
+              
+              const bbox = svgElement.getBBox();
+              const padding = options.padding || 20;
+              const canvas = document.createElement('canvas');
+              const ctx = canvas.getContext('2d');
+              
+              canvas.width = bbox.width + padding * 2;
+              canvas.height = bbox.height + padding * 2;
+              
+              if (!options.transparentBackground) {
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+              }
+              
+              const svgData = new XMLSerializer().serializeToString(svgElement);
+              const modifiedSvgData = svgData.replace(
+                /<svg[^>]*>/,
+                `<svg xmlns="http://www.w3.org/2000/svg" width="${bbox.width}" height="${bbox.height}" viewBox="${bbox.x} ${bbox.y} ${bbox.width} ${bbox.height}">`
+              );
+              
+              await canvg.Canvg.from(ctx, modifiedSvgData, {
+                offsetX: padding,
+                offsetY: padding,
+                scaleWidth: bbox.width,
+                scaleHeight: bbox.height
+              });
+              
+              canvas.toBlob(blob => {
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'ecomap.png';
+                link.click();
+                URL.revokeObjectURL(url);
+              }, 'image/png');
+            } catch (error) {
+              console.error('Error saving PNG:', error);
+              alert(t('errorSavingPng'));
+            }
+          }
+        }, [t]);
+
+        const handleLoadSVG = useCallback((evt) => {
+          const file = evt.target.files[0];
+          if (!file) return;
+          
+          setIsLoading(true);
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            try {
+              const svgContent = e.target.result;
+              const parser = new DOMParser();
+              const svgDoc = parser.parseFromString(svgContent, 'image/svg+xml');
+              const svgElement = svgDoc.querySelector('svg');
+              
+              if (!svgElement) {
+                throw new Error('Invalid SVG file');
+              }
+              
+              const width = parseFloat(svgElement.getAttribute('width')) || 1200;
+              const height = parseFloat(svgElement.getAttribute('height')) || 800;
+              
+              const shapes = [];
+              const lines = [];
+              const texts = [];
+              
+              // Parse shapes (rectangles with text)
+              svgElement.querySelectorAll('g').forEach(g => {
+                const rect = g.querySelector('rect');
+                const foreignObject = g.querySelector('foreignObject');
+                if (rect && foreignObject) {
+                  const transform = g.getAttribute('transform');
+                  let x = 0, y = 0;
+                  if (transform) {
+                    const match = transform.match(/translate\(([^,]+),\s*([^)]+)\)/);
+                    if (match) {
+                      x = parseFloat(match[1]);
+                      y = parseFloat(match[2]);
+                    }
+                  }
+                  
+                  const div = foreignObject.querySelector('div');
+                  const text = div ? div.textContent || '' : '';
+                  const fontSizeStyle = div ? div.style.fontSize : '';
+                  const fontSize = fontSizeStyle ? parseFloat(fontSizeStyle) : FONT_SIZES.medium;
+                  
+                  shapes.push({
+                    id: createUniqueId(),
+                    type: EcoShapeType.Item,
+                    x,
+                    y,
+                    width: parseFloat(rect.getAttribute('width')),
+                    height: parseFloat(rect.getAttribute('height')),
+                    text,
+                    fontSize
+                  });
+                }
+              });
+              
+              // Parse texts (foreignObject without rect)
+              svgElement.querySelectorAll('foreignObject').forEach(fo => {
+                if (!fo.closest('g').querySelector('rect')) {
+                  const div = fo.querySelector('div');
+                  const text = div ? div.textContent || '' : '';
+                  const fontSizeStyle = div ? div.style.fontSize : '';
+                  const fontSize = fontSizeStyle ? parseFloat(fontSizeStyle) : FONT_SIZES.medium;
+                  
+                  texts.push({
+                    id: createUniqueId(),
+                    x: parseFloat(fo.getAttribute('x')),
+                    y: parseFloat(fo.getAttribute('y')),
+                    width: parseFloat(fo.getAttribute('width')),
+                    height: parseFloat(fo.getAttribute('height')),
+                    text,
+                    fontSize
+                  });
+                }
+              });
+              
+              // Parse lines
+              svgElement.querySelectorAll('line, path').forEach(lineElement => {
+                let lineType = EcoLineType.Normal;
+                let start, end;
+                
+                if (lineElement.tagName === 'line') {
+                  start = { x: parseFloat(lineElement.getAttribute('x1')), y: parseFloat(lineElement.getAttribute('y1')) };
+                  end = { x: parseFloat(lineElement.getAttribute('x2')), y: parseFloat(lineElement.getAttribute('y2')) };
+                  
+                  const strokeWidth = parseFloat(lineElement.getAttribute('stroke-width') || '2');
+                  const strokeDasharray = lineElement.getAttribute('stroke-dasharray');
+                  
+                  if (strokeWidth > 3) {
+                    lineType = EcoLineType.Strong;
+                  } else if (strokeDasharray) {
+                    lineType = EcoLineType.Weak;
+                  }
+                } else if (lineElement.tagName === 'path') {
+                  const d = lineElement.getAttribute('d');
+                  const pathMatch = d.match(/M\s*([^\s]+)\s+([^\s]+).*L\s*([^\s]+)\s+([^\s]+)/);
+                  if (pathMatch) {
+                    start = { x: parseFloat(pathMatch[1]), y: parseFloat(pathMatch[2]) };
+                    end = { x: parseFloat(pathMatch[3]), y: parseFloat(pathMatch[4]) };
+                    lineType = EcoLineType.Stressful;
+                  }
+                }
+                
+                if (start && end) {
+                  lines.push({
+                    id: createUniqueId(),
+                    start,
+                    end,
+                    type: lineType
+                  });
+                }
+              });
+              
+              const newState = { shapes, lines, texts, width, height };
+              updateHistory(newState);
+              setSelectedElementIds([]);
+              setEditingShapeId(null);
+              setEditingTextId(null);
+            } catch (error) {
+              console.error('Error loading SVG:', error);
+              alert(t('errorLoadingFile'));
+            } finally {
+              setIsLoading(false);
+            }
+          };
+          reader.readAsText(file);
+          evt.target.value = '';
+        }, [updateHistory, t]);
+
+        // Keyboard shortcuts
+        useEffect(() => {
+          const handleKeyDown = (evt) => {
+            if (evt.key === 'Escape') {
+              setDrawingLine(null);
+              setSelectedElementIds([]);
+              setEditingShapeId(null);
+              setEditingTextId(null);
+            } else if (evt.key === 'Delete' || evt.key === 'Backspace') {
+              if (selectedElementIds.length > 0 && !editingShapeId && !editingTextId) {
+                selectedElementIds.forEach(deleteElement);
+              }
+            } else if ((evt.metaKey || evt.ctrlKey) && evt.key === 'z' && !evt.shiftKey) {
+              evt.preventDefault();
+              undo();
+            } else if ((evt.metaKey || evt.ctrlKey) && (evt.key === 'y' || (evt.key === 'z' && evt.shiftKey))) {
+              evt.preventDefault();
+              redo();
+            }
+          };
+          
+          window.addEventListener('keydown', handleKeyDown);
+          return () => window.removeEventListener('keydown', handleKeyDown);
+        }, [selectedElementIds, editingShapeId, editingTextId, deleteElement, undo, redo]);
+
+        // Set font size for selected texts
+        useEffect(() => {
+          if (selectedElementIds.length > 0) {
+            const newTexts = canvasState.texts.map(text => 
+              selectedElementIds.includes(text.id) ? { ...text, fontSize } : text
+            );
+            const newShapes = canvasState.shapes.map(shape => 
+              selectedElementIds.includes(shape.id) ? { ...shape, fontSize } : shape
+            );
+            setCanvasState(createState(canvasState, { texts: newTexts, shapes: newShapes }));
+          }
+        }, [fontSize, selectedElementIds]);
+
+        if (isLoading) {
+          return e('div', { className: 'fixed inset-0 bg-white flex items-center justify-center' },
+            e('div', { className: 'text-center' },
+              e('div', { className: 'animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4' }),
+              e('p', { className: 'text-gray-600' }, t('loading'))
+            )
+          );
+        }
+
+        return e('div', { className: 'h-screen overflow-hidden relative' },
+          e(Header, {
+            onSave: () => setSaveDialogOpen(true),
+            onLoadSVG: handleLoadSVG,
+            onUndo: undo,
+            onRedo: redo,
+            canUndo: historyIndex > 0,
+            canRedo: historyIndex < history.length - 1,
+            showGrid,
+            setShowGrid
+          }),
+          e(Palette, { activeTool, setActiveTool, fontSize, setFontSize }),
+          e('div', { className: 'pt-32 h-full overflow-auto' },
+            e(Canvas, {
+              canvasState,
+              onMouseDown: handleMouseDown,
+              onMouseMove: handleMouseMove,
+              onMouseUp: handleMouseUp,
+              onMouseLeave: handleMouseLeave,
+              onTouchStart: handleTouchStart,
+              onTouchMove: handleTouchMove,
+              onTouchEnd: handleTouchEnd,
+              onDoubleClickShape: handleDoubleClickShape,
+              onDoubleClickText: handleDoubleClickText,
+              editingTextId,
+              onTextChange: handleTextChange,
+              editingShapeId,
+              onShapeTextChange: handleShapeTextChange,
+              selectedElementIds,
+              drawingLine,
+              selectionBox,
+              showGrid,
+              svgRef,
+              activeTool,
+              shapePreview
+            })
+          ),
+          e(ToolHint, { activeTool, drawingLine, t }),
+          e(SaveDialog, {
+            isOpen: saveDialogOpen,
+            onClose: () => setSaveDialogOpen(false),
+            onSave: handleSave,
+            t
+          })
+        );
+      };
+
+      // Render app
+      const AppWithLanguageProvider = () => e(LanguageProvider, null, e(App));
+      ReactDOM.render(e(AppWithLanguageProvider), document.getElementById('root'));
     </script>
 </body>
 </html>
