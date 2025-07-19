@@ -1,0 +1,1209 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>かんたんエコマップ (Easy Ecomap)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvg/lib/umd.js"></script>
+    <style>
+      body {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+      }
+      /* Custom scrollbar for foreignObject textarea */
+      textarea::-webkit-scrollbar {
+        width: 8px;
+      }
+      textarea::-webkit-scrollbar-track {
+        background: #f1f1f1;
+      }
+      textarea::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 4px;
+      }
+      textarea::-webkit-scrollbar-thumb:hover {
+        background: #555;
+      }
+      .resize-handle {
+        fill: black;
+        stroke: white;
+        stroke-width: 2px;
+      }
+      .line-handle {
+        fill: #2563eb; /* blue-600 */
+        stroke: white;
+        stroke-width: 2px;
+        cursor: move;
+      }
+      .cursor-nwse-resize { cursor: nwse-resize; }
+      .cursor-nesw-resize { cursor: nesw-resize; }
+      .cursor-ns-resize { cursor: ns-resize; }
+      .cursor-ew-resize { cursor: ew-resize; }
+    </style>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body class="bg-white">
+    <div id="root"></div>
+
+    <script type="text/javascript">
+      const { useState, useRef, useCallback, useEffect, createContext, useContext } = React;
+
+      // --- ENUMS ---
+      const EcoShapeType = {
+        Item: 'Item',
+      };
+
+      const EcoLineType = {
+        Strong: 'Strong',
+        Normal: 'Normal',
+        Weak: 'Weak',
+        Stressful: 'Stressful',
+      };
+
+      // --- CONSTANTS ---
+      const SHAPE_SIZES = {
+        default: { width: 160, height: 50 },
+      };
+      const MIN_SHAPE_SIZE = { width: 40, height: 30 };
+      const TEXT_SIZES = {
+        default: { width: 150, height: 40 },
+      };
+      const FONT_SIZES = {
+        small: 12,
+        medium: 16,
+        large: 20,
+      };
+      const LINE_STROKES = {
+        [EcoLineType.Strong]: 4,
+        [EcoLineType.Normal]: 2,
+        [EcoLineType.Weak]: 2,
+        [EcoLineType.Stressful]: 2,
+      };
+      const GRID_SIZE = 20;
+
+      // --- i18n ---
+      const locales = {
+        ja: {
+          name: '日本語',
+          headerTitle: 'かんたんエコマップ',
+          save: '保存',
+          loadSVG: '読込',
+          undo: '元に戻す',
+          redo: 'やり直す',
+          toggleGrid: 'グリッド',
+          language: '言語',
+          select: '選択',
+          text: 'テキスト',
+          addItem: '項目を追加',
+          eraser: '消しゴム',
+          strongConnection: '強い・肯定的',
+          normalConnection: '普通',
+          weakConnection: '希薄・疎遠',
+          stressfulConnection: 'ストレス・葛藤',
+          fontSize: '文字サイズ',
+          fontSmall: '小',
+          fontMedium: '中',
+          fontLarge: '大',
+          enterName: '名称を入力してください:',
+          defaultItemName: '新規項目',
+          defaultText: 'テキストを入力',
+          loading: '読み込み中...',
+          errorLoadingFile: 'ファイルの読み込みに失敗しました。有効なエコマップSVGファイルを選択してください。',
+          saveOptions: '保存オプション',
+          fileFormat: 'ファイル形式',
+          padding: '余白 (px)',
+          transparentBackground: '背景を透過する',
+          cancel: 'キャンセル',
+          confirmSave: '保存する',
+          errorSavingPng: 'PNGの保存に失敗しました。画像変換中にエラーが発生しました。'
+        },
+        en: {
+          name: 'English',
+          headerTitle: 'Easy Ecomap',
+          save: 'Save',
+          loadSVG: 'Load',
+          undo: 'Undo',
+          redo: 'Redo',
+          toggleGrid: 'Grid',
+          language: 'Language',
+          select: 'Select',
+          text: 'Text',
+          addItem: 'Add Item',
+          eraser: 'Eraser',
+          strongConnection: 'Strong/Positive',
+          normalConnection: 'Normal',
+          weakConnection: 'Weak/Distant',
+          stressfulConnection: 'Stressful/Conflict',
+          fontSize: 'Font Size',
+          fontSmall: 'Small',
+          fontMedium: 'Medium',
+          fontLarge: 'Large',
+          enterName: 'Enter name:',
+          defaultItemName: 'New Item',
+          defaultText: 'Enter text',
+          loading: 'Loading...',
+          errorLoadingFile: 'Failed to load file. Please select a valid Ecomap SVG file.',
+          saveOptions: 'Save Options',
+          fileFormat: 'File Format',
+          padding: 'Padding (px)',
+          transparentBackground: 'Transparent Background',
+          cancel: 'Cancel',
+          confirmSave: 'Save',
+          errorSavingPng: 'Failed to save PNG. There was an error converting the image.'
+        },
+      };
+
+      // --- CONTEXT ---
+      const LanguageContext = createContext();
+
+      const LanguageProvider = ({ children }) => {
+        const [language, setLanguage] = useState('ja');
+        const t = (key) => locales[language][key] || locales.en[key];
+        return React.createElement(LanguageContext.Provider, { value: { language, setLanguage, t } }, children);
+      };
+
+      const useLanguage = () => useContext(LanguageContext);
+
+      // --- ICONS ---
+      const e = React.createElement;
+      const SelectIcon = () => e('svg',{xmlns:'http://www.w3.org/2000/svg',width:24,height:24,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},e('path',{d:'M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z'}),e('path',{d:'M13 13l6 6'}));
+      const TextIcon = () => e('svg',{xmlns:"http://www.w3.org/2000/svg", width:24, height:24, viewBox:"0 0 24 24", fill:"none", stroke:"currentColor", strokeWidth:2, strokeLinecap:"round", strokeLinejoin:"round"}, e('path', {d:"M7 20l5-16 5 16"}), e('path', {d:"M8 14h8"}));
+      const ItemIcon = () => e('svg',{width:24,height:24,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'}, e('rect', {x:3, y:8, width:18, height:8, rx:2}));
+      const EraserIcon = () => e('svg',{xmlns:"http://www.w3.org/2000/svg",width:24,height:24,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2,strokeLinecap:"round",strokeLinejoin:"round"},e('path',{d:"m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"}),e('path',{d:"M22 21H7"}),e('path',{d:"m5 12 5 5"}));
+      const StrongLineIcon = () => e('svg',{width:24,height:24,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor'},e('line',{x1:2,y1:12,x2:22,y2:12,strokeWidth:4}));
+      const NormalLineIcon = () => e('svg',{width:24,height:24,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor'},e('line',{x1:2,y1:12,x2:22,y2:12,strokeWidth:2}));
+      const WeakLineIcon = () => e('svg',{width:24,height:24,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor'},e('line',{x1:2,y1:12,x2:22,y2:12,strokeWidth:2,strokeDasharray:'4 4'}));
+      const StressfulLineIcon = () => e('svg',{width:24,height:24,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},e('path',{d:'M2 12l4 4l4-8l4 8l4-4l4 4'}));
+      const UndoIcon = () => e('svg',{xmlns:"http://www.w3.org/2000/svg",width:20,height:20,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2,strokeLinecap:"round",strokeLinejoin:"round"},e('path',{d:"M3 7v6h6"}),e('path',{d:"M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"}));
+      const RedoIcon = () => e('svg',{xmlns:"http://www.w3.org/2000/svg",width:20,height:20,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2,strokeLinecap:"round",strokeLinejoin:"round"},e('path',{d:"M21 7v6h-6"}),e('path',{d:"M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3L21 13"}));
+
+
+      // --- COMPONENTS ---
+      const ShapeComponent = ({ shape, isSelected, onDoubleClick, isEditing, onTextChange, activeTool }) => {
+        const { id, x, y, width, height, text, fontSize } = shape;
+        const strokeColor = 'black';
+        const strokeWidth = isSelected ? 3 : 2;
+        const shapeTextareaRef = useRef(null);
+        
+        let cursorClass = 'cursor-pointer';
+        if (Object.values(EcoLineType).includes(activeTool)) {
+            cursorClass = 'cursor-crosshair';
+        }
+
+        useEffect(() => {
+            if (isEditing && shapeTextareaRef.current) {
+                shapeTextareaRef.current.focus();
+                shapeTextareaRef.current.select();
+            }
+        }, [isEditing]);
+
+        const handleTextareaKeyDown = (evt) => {
+            if (evt.key === 'Enter' && !evt.shiftKey && !evt.altKey && !evt.metaKey) {
+                evt.preventDefault();
+                onTextChange(id, evt.target.value, true);
+            }
+        };
+
+        const textStyle = {
+            fontFamily: 'inherit',
+            fontSize: `${fontSize || FONT_SIZES.medium}px`,
+            fontWeight: 'bold',
+            textAlign: 'center',
+            color: 'black',
+            background: 'none',
+            border: 'none',
+            outline: 'none',
+            resize: 'none',
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '4px',
+            margin: '0',
+            boxSizing: 'border-box',
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-word',
+        };
+
+        return e('g', {
+            transform: `translate(${x}, ${y})`,
+            className: cursorClass,
+            onDoubleClick: () => !isEditing && onDoubleClick(id),
+          },
+          e('rect', {
+            width, height, rx: 15, ry: 15,
+            fill: 'white', stroke: strokeColor, strokeWidth
+          }),
+          isEditing ?
+            e('foreignObject', { x: 0, y: 0, width: width, height: height },
+                e('textarea', {
+                    ref: shapeTextareaRef,
+                    value: text,
+                    onChange: (evt) => onTextChange(id, evt.target.value),
+                    onBlur: (evt) => onTextChange(id, evt.target.value, true),
+                    onKeyDown: handleTextareaKeyDown,
+                    style: textStyle
+                })
+            )
+            :
+            e('foreignObject', { x: 0, y: 0, width, height, className: 'select-none' },
+                e('div', { style: textStyle }, text)
+            )
+        );
+      };
+
+      const Palette = ({ activeTool, setActiveTool, fontSize, setFontSize }) => {
+        const { t } = useLanguage();
+        
+        const toolButton = (tool) => e('button', {
+          key: tool.id, onClick: () => setActiveTool(tool.id),
+          className: `p-3 rounded-md transition-colors ${activeTool === tool.id ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`,
+          title: tool.label
+        }, tool.icon);
+
+        const lineTool = (tool) => e('div', { key: tool.id, className: 'flex items-center space-x-2' },
+            e('button', {
+                onClick: () => setActiveTool(tool.id),
+                className: `p-2 rounded-md transition-colors ${activeTool === tool.id ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`,
+                title: tool.label
+            }, e('div', { className: 'w-6 h-6 flex items-center justify-center'}, tool.icon)),
+            e('span', { className: 'text-sm text-gray-700' }, tool.label)
+        );
+        
+        const mainTools = [
+          { id: 'select', icon: e(SelectIcon), label: t('select') },
+          { id: 'text', icon: e(TextIcon), label: t('text') },
+          { id: 'shape', icon: e(ItemIcon), label: t('addItem') },
+          { id: 'eraser', icon: e(EraserIcon), label: t('eraser') },
+        ];
+
+        const lineTools = [
+          { id: EcoLineType.Strong, icon: e(StrongLineIcon), label: t('strongConnection') },
+          { id: EcoLineType.Normal, icon: e(NormalLineIcon), label: t('normalConnection') },
+          { id: EcoLineType.Weak, icon: e(WeakLineIcon), label: t('weakConnection') },
+          { id: EcoLineType.Stressful, icon: e(StressfulLineIcon), label: t('stressfulConnection') }
+        ];
+
+        return e('div', { className: 'absolute top-16 left-4 bg-white shadow-lg rounded-lg p-3 flex flex-col space-y-3 z-10 border border-gray-200 w-56' },
+          e('div', { className: 'grid grid-cols-2 gap-1' }, mainTools.map(tool => toolButton(tool))),
+          e('hr', { className: 'border-gray-200' }),
+          e('div', { className: 'flex flex-col space-y-2' }, lineTools.map(tool => lineTool(tool))),
+          e('hr', { className: 'border-gray-200' }),
+          e('div', null,
+            e('label', { className: 'text-xs text-gray-500 font-semibold mb-1 block px-1' }, t('fontSize')),
+            e('div', { className: 'flex space-x-1' },
+              Object.entries(FONT_SIZES).map(([name, size]) => e('button', {
+                key: name, onClick: () => setFontSize(size),
+                className: `px-3 py-1 text-sm rounded-md transition-colors w-full ${fontSize === size ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`
+              }, t(`font${name.charAt(0).toUpperCase() + name.slice(1)}`)))
+            )
+          )
+        );
+      };
+
+      const Header = ({ onSave, onLoadSVG, onUndo, onRedo, canUndo, canRedo, showGrid, setShowGrid }) => {
+        const { t, language, setLanguage } = useLanguage();
+        const fileInputRef = useRef(null);
+
+        const createButton = (labelOrIcon, onClick, disabled = false, title = '') => e('button', {
+            onClick, disabled, title,
+            className: "px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          }, labelOrIcon);
+
+        return e('header', { className: 'absolute top-0 left-0 right-0 h-14 bg-white shadow-md flex items-center justify-between px-2 sm:px-4 z-20 border-b border-gray-200' },
+          e('h1', { className: 'text-base sm:text-lg md:text-xl font-bold text-gray-800 whitespace-nowrap overflow-hidden text-ellipsis' }, t('headerTitle')),
+          e('div', { className: 'flex items-center space-x-1 sm:space-x-2' },
+            createButton(t('save'), onSave, false, t('save')),
+            createButton(t('loadSVG'), () => fileInputRef.current?.click(), false, t('loadSVG')),
+            e('input', { type: 'file', ref: fileInputRef, onChange: onLoadSVG, accept: '.svg', className: 'hidden' }),
+            e('div', { className: 'w-px h-6 bg-gray-300 mx-1' }),
+            createButton(e(UndoIcon), onUndo, !canUndo, t('undo')),
+            createButton(e(RedoIcon), onRedo, !canRedo, t('redo')),
+            e('div', { className: 'w-px h-6 bg-gray-300 mx-1' }),
+            e('label', { className: 'flex items-center space-x-2 cursor-pointer p-2 rounded-md hover:bg-gray-50' },
+              e('input', { type: 'checkbox', checked: showGrid, onChange: (e) => setShowGrid(e.target.checked), className: 'h-4 w-4 text-blue-600 rounded focus:ring-blue-500 border-gray-300' }),
+              e('span', { className: 'text-sm font-medium text-gray-700 hidden sm:inline' }, t('toggleGrid'))
+            ),
+            e('div', { className: 'w-px h-6 bg-gray-300 mx-1' }),
+            e('select', {
+                value: language, onChange: (e) => setLanguage(e.target.value),
+                className: "px-2 sm:px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              },
+              Object.keys(locales).map(lang => e('option', { key: lang, value: lang }, locales[lang].name))
+            )
+          )
+        );
+      };
+      
+      const Canvas = ({ canvasState, onMouseDown, onMouseMove, onMouseUp, onMouseLeave, onDoubleClickShape, onDoubleClickText, editingTextId, onTextChange, editingShapeId, onShapeTextChange, selectedElementIds, drawingLine, selectionBox, showGrid, svgRef, activeTool, shapePreview, resizingState, lineHandleDragState }) => {
+        const { shapes, lines, texts, width, height } = canvasState;
+        const textareaRef = useRef(null);
+        
+        useEffect(() => {
+            if (editingTextId && textareaRef.current) {
+                textareaRef.current.focus();
+                textareaRef.current.select();
+            }
+        }, [editingTextId]);
+        
+        let cursorClass = 'cursor-default';
+        if (drawingLine || Object.values(EcoLineType).includes(activeTool) || activeTool === 'shape' || activeTool === 'text') {
+            cursorClass = 'cursor-crosshair';
+        } else if (resizingState) {
+            cursorClass = resizingState.cursor;
+        } else if (lineHandleDragState) {
+            cursorClass = 'cursor-move';
+        } else if (activeTool === 'eraser') {
+            cursorClass = 'cursor-pointer';
+        }
+
+        const generateZigzagPath = (start, end) => {
+            const dx = end.x - start.x, dy = end.y - start.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            const segments = Math.max(2, Math.floor(distance / 15));
+            const amplitude = 8;
+            let path = `M ${start.x} ${start.y} `;
+            for (let i = 1; i < segments; i++) {
+                const t = i / segments;
+                const x = start.x + dx * t;
+                const y = start.y + dy * t;
+                const perpDx = -dy / distance, perpDy = dx / distance;
+                const offsetX = perpDx * amplitude * (i % 2 === 0 ? 1 : -1);
+                const offsetY = perpDy * amplitude * (i % 2 === 0 ? 1 : -1);
+                path += `L ${x + offsetX} ${y + offsetY} `;
+            }
+            path += `L ${end.x} ${end.y}`;
+            return path;
+        };
+
+        const getResizeHandles = (element) => {
+            if (!element) return [];
+            const { x, y, width, height } = element;
+            const handleSize = 8;
+            const h2 = handleSize / 2;
+
+            return [
+              { id: 'top-left', x: x - h2, y: y - h2, cursor: 'cursor-nwse-resize' },
+              { id: 'top', x: x + width/2 - h2, y: y - h2, cursor: 'cursor-ns-resize' },
+              { id: 'top-right', x: x + width - h2, y: y - h2, cursor: 'cursor-nesw-resize' },
+              { id: 'left', x: x - h2, y: y + height/2 - h2, cursor: 'cursor-ew-resize' },
+              { id: 'right', x: x + width - h2, y: y + height/2 - h2, cursor: 'cursor-ew-resize' },
+              { id: 'bottom-left', x: x - h2, y: y + height - h2, cursor: 'cursor-nwse-resize' },
+              { id: 'bottom', x: x + width/2 - h2, y: y + height - h2, cursor: 'cursor-ns-resize' },
+              { id: 'bottom-right', x: x + width - h2, y: y + height - h2, cursor: 'cursor-nwse-resize' },
+            ];
+        };
+        
+        const singleSelectedElement = selectedElementIds.length === 1 ? [...shapes, ...texts].find(s => s.id === selectedElementIds[0]) : null;
+        const singleSelectedLine = selectedElementIds.length === 1 ? lines.find(l => l.id === selectedElementIds[0]) : null;
+
+        const allLines = drawingLine ? [...lines, drawingLine] : lines;
+
+        return e('svg', { ref: svgRef, className: `w-full h-full ${cursorClass}`, width, height, onMouseDown, onMouseMove, onMouseUp, onMouseLeave },
+            e('defs', null,
+                showGrid && e('pattern', { id: 'grid', width: GRID_SIZE, height: GRID_SIZE, patternUnits: 'userSpaceOnUse' },
+                    e('path', { d: `M ${GRID_SIZE} 0 L 0 0 0 ${GRID_SIZE}`, fill: 'none', stroke: 'rgba(0, 0, 0, 0.15)', strokeWidth: '1' })
+                )
+            ),
+            e('rect', { width: '100%', height: '100%', fill: showGrid ? 'url(#grid)' : 'white' }),
+            shapePreview && e('rect', {
+                x: shapePreview.x, y: shapePreview.y, width: shapePreview.width, height: shapePreview.height,
+                rx: 15, ry: 15,
+                fill: 'rgba(0,0,0,0.1)', stroke: 'rgba(0,0,0,0.4)', strokeWidth: 2, strokeDasharray: '5,5'
+            }),
+            allLines.map(line => {
+                const isSelected = selectedElementIds.includes(line.id);
+                const strokeWidth = LINE_STROKES[line.type] + (isSelected ? 2 : 0);
+                const strokeColor = 'black';
+                let lineCursorClass = activeTool === 'eraser' ? 'cursor-pointer' : '';
+                if (Object.values(EcoLineType).includes(activeTool)) {
+                    lineCursorClass = 'cursor-crosshair';
+                }
+
+                if (line.type === EcoLineType.Stressful) {
+                    return e('path', { key: line.id, d: generateZigzagPath(line.start, line.end), stroke: strokeColor, strokeWidth, fill: 'none', className: lineCursorClass });
+                }
+                return e('line', { key: line.id, x1: line.start.x, y1: line.start.y, x2: line.end.x, y2: line.end.y, stroke: strokeColor, strokeWidth, strokeDasharray: line.type === EcoLineType.Weak ? '5,5' : 'none', className: lineCursorClass });
+            }),
+            shapes.map(shape => e(ShapeComponent, { key: shape.id, shape, isSelected: selectedElementIds.includes(shape.id), onDoubleClick: onDoubleClickShape, isEditing: editingShapeId === shape.id, onTextChange: onShapeTextChange, activeTool })),
+            texts.map(text => {
+                const isSelected = selectedElementIds.includes(text.id);
+                const isEditing = editingTextId === text.id;
+                let elementCursorClass = 'cursor-pointer';
+                if (activeTool === 'eraser') {
+                    elementCursorClass = 'cursor-pointer';
+                } else if (Object.values(EcoLineType).includes(activeTool)) {
+                    elementCursorClass = 'cursor-crosshair';
+                }
+
+
+                return e('g', { key: text.id, transform: `translate(${text.x}, ${text.y})`, className: elementCursorClass },
+                    isEditing ? e('foreignObject', { x: 0, y: 0, width: text.width, height: text.height },
+                        e('textarea', {
+                            ref: textareaRef, value: text.text,
+                            onChange: (e) => onTextChange(text.id, e.target.value),
+                            onBlur: () => onTextChange(text.id, text.text, true),
+                            onKeyDown: (evt) => { if (evt.key === 'Enter' && !evt.shiftKey && !evt.altKey && !evt.metaKey) { evt.preventDefault(); onTextChange(text.id, text.text, true); }},
+                            style: { fontSize: `${text.fontSize}px` },
+                            className: "w-full h-full p-1 border border-blue-500 rounded-md resize-none bg-white text-black"
+                        })
+                    ) : e('foreignObject', { x: 0, y: 0, width: text.width, height: text.height, onDoubleClick: () => onDoubleClickText(text.id) },
+                        e('div', {
+                            style: { fontSize: `${text.fontSize}px`, border: isSelected ? '2px solid black' : '1px solid transparent', padding: isSelected ? '0px' : '1px' },
+                            className: "w-full h-full p-1 box-border break-words text-black"
+                        }, text.text)
+                    )
+                );
+            }),
+            singleSelectedElement && getResizeHandles(singleSelectedElement).map(handle => e('rect', {
+                key: handle.id, 'data-handle': handle.id, x: handle.x, y: handle.y, width: 8, height: 8,
+                className: `resize-handle ${handle.cursor}`
+            })),
+            singleSelectedLine && [singleSelectedLine.start, singleSelectedLine.end].map((point, index) => e('circle', {
+                key: `handle-line-${index}`,
+                'data-line-id': singleSelectedLine.id,
+                'data-handle-type': index === 0 ? 'start' : 'end',
+                cx: point.x, cy: point.y, r: 6,
+                className: 'line-handle'
+            })),
+            selectionBox && e('rect', { x: selectionBox.x, y: selectionBox.y, width: selectionBox.width, height: selectionBox.height, fill: 'rgba(59, 130, 246, 0.2)', stroke: 'rgba(59, 130, 246, 0.8)', strokeWidth: '1' })
+        );
+      };
+
+      const SaveModal = ({ isOpen, onClose, onSave, t }) => {
+          const [format, setFormat] = useState('png');
+          const [padding, setPadding] = useState(20);
+          const [transparentBg, setTransparentBg] = useState(false);
+          
+          if (!isOpen) return null;
+
+          return e('div', { className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50' },
+              e('div', { className: 'bg-white rounded-lg shadow-xl p-6 w-full max-w-md' },
+                  e('h2', { className: 'text-xl font-bold mb-4 text-gray-800' }, t('saveOptions')),
+                  
+                  e('div', { className: 'mb-4' },
+                      e('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, t('fileFormat')),
+                      e('div', { className: 'flex rounded-md shadow-sm' },
+                          e('button', {
+                              onClick: () => setFormat('png'),
+                              className: `px-4 py-2 text-sm font-medium ${format === 'png' ? 'bg-blue-600 text-white z-10' : 'bg-white text-gray-700 hover:bg-gray-50'} border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500`
+                          }, 'PNG'),
+                          e('button', {
+                              onClick: () => setFormat('svg'),
+                              className: `px-4 py-2 text-sm font-medium ${format === 'svg' ? 'bg-blue-600 text-white z-10' : 'bg-white text-gray-700 hover:bg-gray-50'} border-t border-b border-r border-gray-300 rounded-r-md focus:outline-none -ml-px focus:ring-2 focus:ring-blue-500`
+                          }, 'SVG')
+                      )
+                  ),
+                  
+                  format === 'png' && e('div', null,
+                      e('div', { className: 'mb-4' },
+                          e('label', { htmlFor: 'padding', className: 'block text-sm font-medium text-gray-700' }, t('padding')),
+                          e('input', {
+                              type: 'number', id: 'padding', value: padding,
+                              onChange: e => setPadding(Math.max(0, parseInt(e.target.value) || 0)),
+                              className: 'mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm'
+                          })
+                      ),
+                      e('div', { className: 'flex items-center' },
+                          e('input', {
+                              id: 'transparentBg', type: 'checkbox', checked: transparentBg,
+                              onChange: e => setTransparentBg(e.target.checked),
+                              className: 'h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500'
+                          }),
+                          e('label', { htmlFor: 'transparentBg', className: 'ml-2 block text-sm text-gray-900' }, t('transparentBackground'))
+                      )
+                  ),
+
+                  e('div', { className: 'mt-6 flex justify-end space-x-3' },
+                      e('button', {
+                          onClick: onClose,
+                          className: 'px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
+                      }, t('cancel')),
+                      e('button', {
+                          onClick: () => onSave({ format, padding, transparentBg }),
+                          className: 'px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
+                      }, t('confirmSave'))
+                  )
+              )
+          );
+      };
+
+
+      // --- APP (Main Component) ---
+
+      const App = () => {
+          const { t } = useLanguage();
+          const [canvasState, setCanvasState] = useState({ shapes: [], lines: [], texts: [], width: window.innerWidth, height: window.innerHeight });
+          const [history, setHistory] = useState([canvasState]);
+          const [historyIndex, setHistoryIndex] = useState(0);
+
+          const [activeTool, setActiveTool] = useState('select');
+          const [fontSize, setFontSize] = useState(FONT_SIZES.medium);
+          const [showGrid, setShowGrid] = useState(true);
+
+          const [selectedElementIds, setSelectedElementIds] = useState([]);
+          const [editingTextId, setEditingTextId] = useState(null);
+          const [editingShapeId, setEditingShapeId] = useState(null);
+          
+          const isDraggingRef = useRef(false);
+          const [drawingLine, setDrawingLine] = useState(null);
+          const [selectionBox, setSelectionBox] = useState(null);
+          const [shapePreview, setShapePreview] = useState(null);
+          const [resizingState, setResizingState] = useState(null);
+          const [lineHandleDragState, setLineHandleDragState] = useState(null);
+
+          const dragStartPosRef = useRef({ x: 0, y: 0 });
+          const dragElementStartPosRef = useRef(new Map());
+          
+          const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
+          const svgRef = useRef(null);
+
+          const updateHistory = useCallback((newState) => {
+              const newHistory = history.slice(0, historyIndex + 1);
+              newHistory.push(newState);
+              setHistory(newHistory);
+              setHistoryIndex(newHistory.length - 1);
+          }, [history, historyIndex]);
+          
+          const commitCanvasState = useCallback((updater) => {
+              setCanvasState(prev => {
+                  const newState = typeof updater === 'function' ? updater(prev) : updater;
+                  updateHistory(newState);
+                  return newState;
+              });
+          }, [updateHistory]);
+
+          const handleFontSizeChange = (newSize) => {
+              setFontSize(newSize);
+
+              if (selectedElementIds.length === 0) return;
+
+              commitCanvasState(prev => {
+                  const newShapes = prev.shapes.map(s => 
+                      selectedElementIds.includes(s.id) ? { ...s, fontSize: newSize } : s
+                  );
+                  const newTexts = prev.texts.map(t =>
+                      selectedElementIds.includes(t.id) ? { ...t, fontSize: newSize } : t
+                  );
+                  return { ...prev, shapes: newShapes, texts: newTexts };
+              });
+          };
+
+          const getSVGPoint = (e) => {
+              if (!svgRef.current) return { x: 0, y: 0 };
+              const pt = svgRef.current.createSVGPoint();
+              pt.x = e.clientX;
+              pt.y = e.clientY;
+              return pt.matrixTransform(svgRef.current.getScreenCTM()?.inverse());
+          };
+
+          const findShapeAt = (pos, state = canvasState) => {
+              for (let i = state.shapes.length - 1; i >= 0; i--) {
+                  const shape = state.shapes[i];
+                  if (pos.x >= shape.x && pos.x <= shape.x + shape.width && pos.y >= shape.y && pos.y <= shape.y + shape.height) {
+                      return shape;
+                  }
+              }
+              return null;
+          };
+
+          const findTextAt = (pos, state = canvasState) => {
+              for (let i = state.texts.length - 1; i >= 0; i--) {
+                  const text = state.texts[i];
+                  if (pos.x >= text.x && pos.x <= text.x + text.width && pos.y >= text.y && pos.y <= text.y + text.height) {
+                      return text;
+                  }
+              }
+              return null;
+          };
+
+          const findLineAt = (pos, state = canvasState) => {
+              const threshold = 5;
+              for (let i = state.lines.length - 1; i >= 0; i--) {
+                  const line = state.lines[i];
+                  const p1 = line.start;
+                  const p2 = line.end;
+                  const p = pos;
+                  const l2 = (p2.x - p1.x) * (p2.x - p1.x) + (p2.y - p1.y) * (p2.y - p1.y);
+                  if (l2 === 0) continue;
+                  let t = ((p.x - p1.x) * (p2.x - p1.x) + (p.y - p1.y) * (p2.y - p1.y)) / l2;
+                  t = Math.max(0, Math.min(1, t));
+                  const closestX = p1.x + t * (p2.x - p1.x);
+                  const closestY = p1.y + t * (p2.y - p1.y);
+                  const dx = p.x - closestX;
+                  const dy = p.y - closestY;
+                  const dist = Math.sqrt(dx*dx + dy*dy);
+                  if (dist < threshold) return line;
+              }
+              return null;
+          };
+
+          const deleteElementsByIds = (idsToDelete) => {
+              if (!idsToDelete || idsToDelete.length === 0) return;
+
+              commitCanvasState(prev => {
+                  const shapesToDelete = new Set(idsToDelete.filter(id => prev.shapes.some(s => s.id === id)));
+                  const textsToDelete = new Set(idsToDelete.filter(id => prev.texts.some(t => t.id === id)));
+                  const linesToDelete = new Set(idsToDelete.filter(id => prev.lines.some(l => l.id === id)));
+                  
+                  const newShapes = prev.shapes.filter(s => !shapesToDelete.has(s.id));
+                  const newTexts = prev.texts.filter(t => !textsToDelete.has(t.id));
+                  
+                  const newLines = prev.lines.filter(l => 
+                      !linesToDelete.has(l.id) &&
+                      !shapesToDelete.has(l.startShapeId) &&
+                      !shapesToDelete.has(l.endShapeId)
+                  );
+                  
+                  return { ...prev, shapes: newShapes, texts: newTexts, lines: newLines };
+              });
+              setSelectedElementIds([]);
+          };
+          
+          const handleMouseDown = (e) => {
+              if (e.button !== 0) return;
+              const pos = getSVGPoint(e);
+              isDraggingRef.current = true;
+              dragStartPosRef.current = pos;
+              
+              if (editingTextId !== null) setEditingTextId(null);
+              if (editingShapeId !== null) setEditingShapeId(null);
+              
+              const lineId = e.target.dataset.lineId;
+              const handleType = e.target.dataset.handleType;
+              if (lineId && handleType) {
+                  setLineHandleDragState({
+                      lineId: parseInt(lineId),
+                      handleType: handleType,
+                  });
+                  return;
+              }
+
+              const handleId = e.target.dataset.handle;
+              if (handleId && selectedElementIds.length === 1) {
+                  const element = [...canvasState.shapes, ...canvasState.texts].find(el => el.id === selectedElementIds[0]);
+                  setResizingState({
+                      elementId: element.id,
+                      handle: handleId,
+                      startX: element.x,
+                      startY: element.y,
+                      startWidth: element.width,
+                      startHeight: element.height,
+                      cursor: e.target.classList.contains('cursor-nwse-resize') ? 'cursor-nwse-resize' :
+                              e.target.classList.contains('cursor-nesw-resize') ? 'cursor-nesw-resize' :
+                              e.target.classList.contains('cursor-ns-resize') ? 'cursor-ns-resize' : 'cursor-ew-resize'
+                  });
+                  return;
+              }
+
+              const clickedShape = findShapeAt(pos);
+              const clickedText = findTextAt(pos);
+              const clickedLine = !clickedShape && !clickedText ? findLineAt(pos) : null;
+              const clickedElement = clickedShape || clickedText || clickedLine;
+
+              if (activeTool === 'eraser') {
+                  if (clickedElement) {
+                      deleteElementsByIds([clickedElement.id]);
+                  }
+              } else if (activeTool === 'shape') {
+                  const shapeSize = SHAPE_SIZES.default;
+                  const shapeText = t('defaultItemName');
+                  
+                  commitCanvasState(prev => ({ ...prev, shapes: [...prev.shapes, { 
+                      id: Date.now(), 
+                      type: EcoShapeType.Item, 
+                      x: pos.x - shapeSize.width / 2, 
+                      y: pos.y - shapeSize.height / 2, 
+                      ...shapeSize, 
+                      text: shapeText,
+                      fontSize: fontSize
+                  }] }));
+              } else if (activeTool === 'text') {
+                  const newText = { id: Date.now(), x: pos.x, y: pos.y, ...TEXT_SIZES.default, text: t('defaultText'), fontSize };
+                  commitCanvasState(prev => ({...prev, texts: [...prev.texts, newText]}));
+                  setEditingTextId(newText.id);
+              } else if (Object.values(EcoLineType).includes(activeTool)) {
+                  const startShape = findShapeAt(pos);
+                  setDrawingLine({ id: Date.now(), type: activeTool, start: startShape ? {x: startShape.x + startShape.width/2, y: startShape.y + startShape.height/2} : pos, end: pos, startShapeId: startShape?.id || null, endShapeId: null });
+              } else if (activeTool === 'select') {
+                  const elementToSelect = clickedElement;
+                  if(elementToSelect) {
+                      const isSelected = selectedElementIds.includes(elementToSelect.id);
+                      if (e.shiftKey) {
+                        setSelectedElementIds(prev => isSelected ? prev.filter(id => id !== elementToSelect.id) : [...prev, elementToSelect.id]);
+                      } else if (!isSelected) {
+                        setSelectedElementIds([elementToSelect.id]);
+                      }
+                      
+                      dragElementStartPosRef.current.clear();
+                      const elementIdsToDrag = e.shiftKey ? (isSelected ? selectedElementIds.filter(id => id !== elementToSelect.id) : [...selectedElementIds, elementToSelect.id]) : [elementToSelect.id];
+                      const elementsToDrag = [...canvasState.shapes, ...canvasState.texts].filter(el => elementIdsToDrag.includes(el.id));
+                      elementsToDrag.forEach(el => dragElementStartPosRef.current.set(el.id, {x: el.x, y: el.y}));
+                  } else {
+                      setSelectedElementIds([]);
+                      setSelectionBox({x: pos.x, y: pos.y, width: 0, height: 0});
+                  }
+              }
+          };
+
+          const handleMouseMove = (e) => {
+              if (!isDraggingRef.current) {
+                  if (activeTool === 'shape') {
+                      const pos = getSVGPoint(e);
+                      const shapeSize = SHAPE_SIZES.default;
+                      setShapePreview({ x: pos.x - shapeSize.width/2, y: pos.y - shapeSize.height/2, ...shapeSize });
+                  }
+                  return;
+              }
+              const pos = getSVGPoint(e);
+              const dx = pos.x - dragStartPosRef.current.x;
+              const dy = pos.y - dragStartPosRef.current.y;
+              
+              if (lineHandleDragState) {
+                  const { lineId, handleType } = lineHandleDragState;
+                  const shapeAtPos = findShapeAt(pos);
+                  const snapPos = shapeAtPos ? { x: shapeAtPos.x + shapeAtPos.width / 2, y: shapeAtPos.y + shapeAtPos.height / 2 } : pos;
+                  const snapShapeId = shapeAtPos?.id || null;
+
+                  setCanvasState(prev => {
+                      const newLines = prev.lines.map(l => {
+                          if (l.id === lineId) {
+                              const updatedLine = { ...l };
+                              if (handleType === 'start') {
+                                  updatedLine.start = snapPos;
+                                  updatedLine.startShapeId = snapShapeId;
+                              } else { // 'end'
+                                  updatedLine.end = snapPos;
+                                  updatedLine.endShapeId = snapShapeId;
+                              }
+                              return updatedLine;
+                          }
+                          return l;
+                      });
+                      return { ...prev, lines: newLines };
+                  });
+                  return;
+              }
+
+              if (resizingState) {
+                  const { elementId, handle, startX, startY, startWidth, startHeight } = resizingState;
+                  let newX = startX, newY = startY, newWidth = startWidth, newHeight = startHeight;
+                  if (handle.includes('right')) newWidth = Math.max(MIN_SHAPE_SIZE.width, startWidth + dx);
+                  if (handle.includes('bottom')) newHeight = Math.max(MIN_SHAPE_SIZE.height, startHeight + dy);
+                  if (handle.includes('left')) {
+                      newWidth = Math.max(MIN_SHAPE_SIZE.width, startWidth - dx);
+                      newX = startX + dx;
+                  }
+                  if (handle.includes('top')) {
+                      newHeight = Math.max(MIN_SHAPE_SIZE.height, startHeight - dy);
+                      newY = startY + dy;
+                  }
+                  const newPos = { x: newX, y: newY, width: newWidth, height: newHeight };
+
+                  setCanvasState(prev => {
+                      const isShape = prev.shapes.some(s => s.id === elementId);
+                      const updater = el => el.id === elementId ? { ...el, ...newPos } : el;
+                      const newShapes = isShape ? prev.shapes.map(updater) : prev.shapes;
+                      const newTexts = !isShape ? prev.texts.map(updater) : prev.texts;
+                      const newLines = prev.lines.map(l => {
+                          const startShape = newShapes.find(s => s.id === l.startShapeId);
+                          const endShape = newShapes.find(s => s.id === l.endShapeId);
+                          return { ...l, start: startShape ? { x: startShape.x + startShape.width / 2, y: startShape.y + startShape.height / 2 } : l.start, end: endShape ? { x: endShape.x + endShape.width / 2, y: endShape.y + endShape.height / 2 } : l.end };
+                      });
+                      return { ...prev, shapes: newShapes, texts: newTexts, lines: newLines };
+                  });
+              } else if (drawingLine) {
+                  setDrawingLine(prev => prev ? {...prev, end: pos} : null);
+              } else if (selectionBox) {
+                  setSelectionBox({x: Math.min(dragStartPosRef.current.x, pos.x), y: Math.min(dragStartPosRef.current.y, pos.y), width: Math.abs(dragStartPosRef.current.x - pos.x), height: Math.abs(dragStartPosRef.current.y - pos.y) });
+              } else if (selectedElementIds.length > 0 && dragElementStartPosRef.current.size > 0 && activeTool === 'select') {
+                  setCanvasState(prev => {
+                      const newShapes = prev.shapes.map(s => {
+                          const startPos = dragElementStartPosRef.current.get(s.id);
+                          return startPos ? { ...s, x: startPos.x + dx, y: startPos.y + dy } : s;
+                      });
+                      const newTexts = prev.texts.map(t => {
+                          const startPos = dragElementStartPosRef.current.get(t.id);
+                          return startPos ? { ...t, x: startPos.x + dx, y: startPos.y + dy } : t;
+                      });
+                      const newLines = prev.lines.map(l => {
+                          const startShape = newShapes.find(s => s.id === l.startShapeId);
+                          const endShape = newShapes.find(s => s.id === l.endShapeId);
+                          return { ...l, start: startShape ? {x: startShape.x + startShape.width/2, y: startShape.y + startShape.height/2} : l.start, end: endShape ? {x: endShape.x + endShape.width/2, y: endShape.y + endShape.height/2} : l.end };
+                      });
+                      return { ...prev, shapes: newShapes, texts: newTexts, lines: newLines };
+                  });
+              }
+          };
+          
+          const handleMouseLeave = () => {
+              if (shapePreview) setShapePreview(null);
+          };
+
+          const handleMouseUp = (e) => {
+              if (resizingState || lineHandleDragState || (isDraggingRef.current && activeTool === 'select' && dragElementStartPosRef.current.size > 0)) {
+                  commitCanvasState(canvasState);
+              }
+              if (drawingLine) {
+                  const pos = getSVGPoint(e);
+                  const endShape = findShapeAt(pos);
+                  const finalLine = { ...drawingLine, end: endShape ? { x: endShape.x + endShape.width/2, y: endShape.y + endShape.height/2} : pos, endShapeId: endShape?.id || null };
+                  if(finalLine.startShapeId !== finalLine.endShapeId || (!finalLine.startShapeId && !finalLine.endShapeId)) {
+                    commitCanvasState(prev => ({ ...prev, lines: [...prev.lines, finalLine] }));
+                  }
+                  setDrawingLine(null);
+              } else if (selectionBox) {
+                  const {x, y, width, height} = selectionBox;
+                  const selectedIds = [...canvasState.shapes, ...canvasState.texts, ...canvasState.lines]
+                      .filter(el => {
+                        if(el.start && el.end){
+                            const p1 = el.start, p2 = el.end;
+                            return (p1.x >= x && p1.x <= x+width && p1.y >= y && p1.y <= y+height) || (p2.x >= x && p2.x <= x+width && p2.y >= y && p2.y <= y+height);
+                        } else {
+                            return el.x < x + width && el.x + el.width > x && el.y < y + height && el.y + el.height > y;
+                        }
+                      }).map(el => el.id);
+                  setSelectedElementIds(selectedIds);
+                  setSelectionBox(null);
+              }
+              isDraggingRef.current = false;
+              setResizingState(null);
+              setLineHandleDragState(null);
+              dragElementStartPosRef.current.clear();
+          };
+
+          const handleDoubleClickShape = (id) => {
+              setSelectedElementIds([]);
+              setEditingTextId(null);
+              setEditingShapeId(id);
+          };
+          
+          const handleShapeTextChange = (id, newText, finalize = false) => {
+              const updater = prev => ({ ...prev, shapes: prev.shapes.map(s => s.id === id ? { ...s, text: newText } : s) });
+              if (finalize) {
+                  commitCanvasState(updater);
+                  setEditingShapeId(null);
+              } else {
+                  setCanvasState(updater);
+              }
+          };
+
+          const handleDoubleClickText = (id) => {
+              setSelectedElementIds([]);
+              setEditingShapeId(null);
+              setEditingTextId(id);
+          };
+
+          const handleTextChange = (id, newText, finalize = false) => {
+              const updater = prev => ({ ...prev, texts: prev.texts.map(t => t.id === id ? { ...t, text: newText } : t) });
+              if (finalize) {
+                  commitCanvasState(updater);
+                  setEditingTextId(null);
+              } else {
+                  setCanvasState(updater);
+              }
+          };
+
+          const handleUndo = useCallback(() => {
+              if (historyIndex > 0) {
+                  const newIndex = historyIndex - 1;
+                  setHistoryIndex(newIndex);
+                  setCanvasState(history[newIndex]);
+              }
+          }, [history, historyIndex]);
+
+          const handleRedo = useCallback(() => {
+              if (historyIndex < history.length - 1) {
+                  const newIndex = historyIndex + 1;
+                  setHistoryIndex(newIndex);
+                  setCanvasState(history[newIndex]);
+              }
+          }, [history, historyIndex]);
+
+          const handleConfirmSave = (options) => {
+              if (options.format === 'svg') {
+                  handleSaveSVG();
+              } else {
+                  handleSavePNG(options);
+              }
+              setIsSaveModalOpen(false);
+          };
+
+          const handleSaveSVG = () => {
+              if (!svgRef.current) return;
+              const svgClone = svgRef.current.cloneNode(true);
+              Array.from(svgClone.querySelectorAll('.resize-handle, .line-handle, rect[fill^="rgba"]')).forEach(el => el.remove());
+              
+              const dataString = JSON.stringify(canvasState);
+              const encodedData = btoa(unescape(encodeURIComponent(dataString)));
+              const dataComment = document.createComment(` ecomap-data: ${encodedData} `);
+              svgClone.appendChild(dataComment);
+              const serializer = new XMLSerializer();
+              const svgString = serializer.serializeToString(svgClone);
+              const blob = new Blob([svgString], { type: 'image/svg+xml' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = 'ecomap.svg';
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+          };
+          
+          const handleSavePNG = async (options) => {
+              const { shapes, lines, texts } = canvasState;
+
+              const getAccurateBoundingBox = () => {
+                  if (shapes.length === 0 && texts.length === 0 && lines.length === 0) {
+                      return { x: 0, y: 0, width: 0, height: 0, defined: false };
+                  }
+                  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                  const expandBounds = (x, y) => {
+                      minX = Math.min(minX, x); minY = Math.min(minY, y);
+                      maxX = Math.max(maxX, x); maxY = Math.max(maxY, y);
+                  };
+                  shapes.forEach(shape => {
+                      const strokeWidth = 2;
+                      expandBounds(shape.x - strokeWidth / 2, shape.y - strokeWidth / 2);
+                      expandBounds(shape.x + shape.width + strokeWidth / 2, shape.y + shape.height + strokeWidth / 2);
+                  });
+                  texts.forEach(text => {
+                      expandBounds(text.x, text.y);
+                      expandBounds(text.x + text.width, text.y + text.height);
+                  });
+                  lines.forEach(line => {
+                      const strokeWidth = LINE_STROKES[line.type] || 2;
+                      let lineBounds = { minX: Math.min(line.start.x, line.end.x), maxX: Math.max(line.start.x, line.end.x), minY: Math.min(line.start.y, line.end.y), maxY: Math.max(line.start.y, line.end.y) };
+                      if (line.type === EcoLineType.Stressful) {
+                          const amplitude = 8;
+                          lineBounds.minX -= amplitude; lineBounds.minY -= amplitude;
+                          lineBounds.maxX += amplitude; lineBounds.maxY += amplitude;
+                      }
+                      expandBounds(lineBounds.minX - strokeWidth / 2, lineBounds.minY - strokeWidth / 2);
+                      expandBounds(lineBounds.maxX + strokeWidth / 2, lineBounds.maxY + strokeWidth / 2);
+                  });
+                  if (minX === Infinity) return { x: 0, y: 0, width: 0, height: 0, defined: false };
+                  return { x: minX, y: minY, width: maxX - minX, height: maxY - minY, defined: true };
+              };
+
+              const bboxWithContent = getAccurateBoundingBox();
+              if (!bboxWithContent.defined) return;
+
+              const padding = options.padding || 0;
+              const bbox = {
+                  x: bboxWithContent.x - padding,
+                  y: bboxWithContent.y - padding,
+                  width: bboxWithContent.width + (padding * 2),
+                  height: bboxWithContent.height + (padding * 2),
+              };
+
+              const generateZigzagPath = (start, end) => {
+                  const dx = end.x - start.x, dy = end.y - start.y;
+                  const d = Math.sqrt(dx * dx + dy * dy);
+                  if (d === 0) return `M ${start.x} ${start.y}`;
+                  const segments = Math.max(2, Math.floor(d / 15));
+                  const amp = 8;
+                  let path = `M ${start.x} ${start.y} `;
+                  for (let i = 1; i < segments; i++) {
+                      const t = i / segments;
+                      const x = start.x + dx * t, y = start.y + dy * t;
+                      const pDx = -dy / d, pDy = dx / d;
+                      const ox = pDx * amp * (i % 2 === 0 ? 1 : -1), oy = pDy * amp * (i % 2 === 0 ? 1 : -1);
+                      path += `L ${x + ox} ${y + oy} `;
+                  }
+                  path += `L ${end.x} ${end.y}`;
+                  return path;
+              };
+              
+              const escapeHtml = str => str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+
+              const renderTextAsTSpans = (text, style) => {
+                  const lines = text.split('\n');
+                  const lineHeight = style.fontSize * 1.2;
+                  const totalTextHeight = lines.length * lineHeight;
+                  
+                  let startY;
+                  if (style.verticalAlign === 'top') {
+                      startY = style.y + style.fontSize * 0.9;
+                  } else { // middle
+                      startY = style.y + (style.height / 2) - (totalTextHeight / 2) + (style.fontSize * 0.9);
+                  }
+                  
+                  const textAnchor = style.textAlign === 'center' ? 'middle' : 'start';
+                  const xPos = style.textAlign === 'center' ? style.x + style.width / 2 : style.x + 5;
+                  
+                  const tspans = lines.map((line, index) => {
+                      const dy = index > 0 ? lineHeight : 0;
+                      return `<tspan x="${xPos}" dy="${dy}">${escapeHtml(line)}</tspan>`;
+                  }).join('');
+
+                  return `<text y="${startY}" font-family="${style.fontFamily}" font-size="${style.fontSize}" font-weight="${style.fontWeight}" text-anchor="${textAnchor}" fill="black">${tspans}</text>`;
+              };
+
+              const computedFontFamily = getComputedStyle(document.body).fontFamily;
+              let svgContent = '';
+
+              lines.forEach(line => {
+                  const strokeWidth = LINE_STROKES[line.type];
+                  if (line.type === EcoLineType.Stressful) {
+                      svgContent += `<path d="${generateZigzagPath(line.start, line.end)}" stroke="black" stroke-width="${strokeWidth}" fill="none" />`;
+                  } else {
+                      svgContent += `<line x1="${line.start.x}" y1="${line.start.y}" x2="${line.end.x}" y2="${line.end.y}" stroke="black" stroke-width="${strokeWidth}" ${line.type === EcoLineType.Weak ? 'stroke-dasharray="5,5"' : ''} />`;
+                  }
+              });
+
+              shapes.forEach(shape => {
+                  const { x, y, width, height, text, fontSize } = shape;
+                  svgContent += `<g transform="translate(${x}, ${y})"><rect width="${width}" height="${height}" rx="15" fill="white" stroke="black" stroke-width="2"/></g>`;
+                  const textStyle = { x, y, width, height, fontSize: fontSize || FONT_SIZES.medium, fontWeight: 'bold', fontFamily: computedFontFamily, textAlign: 'center', verticalAlign: 'middle' };
+                  svgContent += renderTextAsTSpans(text, textStyle);
+              });
+
+              texts.forEach(text => {
+                  const { x, y, width, height, text: content, fontSize } = text;
+                  const textStyle = { x, y, width, height, fontSize: fontSize || FONT_SIZES.medium, fontWeight: 'normal', fontFamily: computedFontFamily, textAlign: 'left', verticalAlign: 'top' };
+                  svgContent += renderTextAsTSpans(content, textStyle);
+              });
+              
+              const svgString = `<svg xmlns="http://www.w3.org/2000/svg" width="${bbox.width}" height="${bbox.height}" viewBox="${bbox.x} ${bbox.y} ${bbox.width} ${bbox.height}">${options.transparentBg ? '' : `<rect x="${bbox.x}" y="${bbox.y}" width="100%" height="100%" fill="white"/>`}${svgContent}</svg>`;
+              
+              try {
+                  const canvas = document.createElement('canvas');
+                  canvas.width = bbox.width;
+                  canvas.height = bbox.height;
+                  const ctx = canvas.getContext('2d');
+                  if(!ctx) { throw new Error("Could not get canvas context"); }
+                  const v = await canvg.Canvg.fromString(ctx, svgString, {
+                      // Workaround for fonts in canvg
+                      fetch: {
+                          Request: (url, options) => {
+                              return new Request(url, {...options, mode: 'cors'});
+                          }
+                      }
+                  });
+                  await v.render();
+                  const pngUrl = canvas.toDataURL('image/png');
+                  const a = document.createElement('a');
+                  a.href = pngUrl;
+                  a.download = 'ecomap.png';
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+              } catch (err) {
+                  console.error("Error during PNG conversion:", err);
+                  alert(t('errorSavingPng'));
+              }
+          };
+
+          const handleLoadSVG = (e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              const reader = new FileReader();
+              reader.onload = (event) => {
+                  const text = event.target?.result;
+                  const match = text.match(/<!--\s*ecomap-data:\s*(.*?)\s*-->/);
+                  if (match && match[1]) {
+                      try {
+                          const decodedData = decodeURIComponent(escape(atob(match[1])));
+                          const loadedState = JSON.parse(decodedData);
+                          
+                          if (loadedState.shapes) {
+                              loadedState.shapes = loadedState.shapes.map(s => {
+                                  const isOldType = s.type === 'Client' || s.type === 'Resource';
+                                  const newShape = isOldType ? { ...s, type: 'Item' } : { ...s };
+                                  if (!newShape.width) newShape.width = SHAPE_SIZES.default.width;
+                                  if (!newShape.height) newShape.height = SHAPE_SIZES.default.height;
+                                  if (!newShape.fontSize) newShape.fontSize = FONT_SIZES.medium;
+                                  return newShape;
+                              });
+                          }
+                          if (loadedState.texts) {
+                              loadedState.texts = loadedState.texts.map(t => ({...t, fontSize: t.fontSize || FONT_SIZES.medium}));
+                          }
+
+                          loadedState.width = Math.max(loadedState.width || 0, window.innerWidth);
+                          loadedState.height = Math.max(loadedState.height || 0, window.innerHeight);
+                          setCanvasState(loadedState);
+                          setHistory([loadedState]);
+                          setHistoryIndex(0);
+                          setSelectedElementIds([]);
+                      } catch (error) {
+                          console.error("Error parsing ecomap data:", error);
+                          alert(t('errorLoadingFile'));
+                      }
+                  } else {
+                      alert(t('errorLoadingFile'));
+                  }
+              };
+              reader.readAsText(file);
+              e.target.value = '';
+          };
+          
+          useEffect(() => {
+              const handleKeyDown = (e) => {
+                  const isEditing = editingTextId !== null || editingShapeId !== null || isSaveModalOpen;
+                  const activeElement = document.activeElement;
+                  const isTyping = activeElement.tagName === 'INPUT' || activeElement.tagName === 'SELECT' || activeElement.tagName === 'TEXTAREA';
+
+                  if (isEditing && activeElement.tagName !== 'BODY') return;
+                  if (isTyping && activeElement.tagName !== 'TEXTAREA') return;
+
+                  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') {
+                      e.preventDefault();
+                      e.shiftKey ? handleRedo() : handleUndo();
+                  }
+                  if (e.key === 'Delete' || e.key === 'Backspace') {
+                      if (!isTyping) {
+                        deleteElementsByIds(selectedElementIds);
+                      }
+                  }
+                  if (e.key === 'Escape') {
+                      if(isSaveModalOpen) setIsSaveModalOpen(false);
+                      else {
+                          setEditingTextId(null);
+                          setEditingShapeId(null);
+                          setDrawingLine(null);
+                          setSelectionBox(null);
+                          setSelectedElementIds([]);
+                          setActiveTool('select');
+                      }
+                  }
+              };
+              const handleResize = () => {
+                setCanvasState(prev => ({...prev, width: window.innerWidth, height: window.innerHeight}));
+              };
+              window.addEventListener('keydown', handleKeyDown);
+              window.addEventListener('resize', handleResize);
+              return () => {
+                window.removeEventListener('keydown', handleKeyDown);
+                window.removeEventListener('resize', handleResize);
+              }
+          }, [selectedElementIds, commitCanvasState, handleUndo, handleRedo, isSaveModalOpen, editingTextId, editingShapeId]);
+
+          return e('div', { className: "w-screen h-screen bg-white text-black font-sans overflow-hidden" },
+              e(Header, { onSave: () => setIsSaveModalOpen(true), onLoadSVG: handleLoadSVG, onUndo: handleUndo, onRedo: handleRedo, canUndo: historyIndex > 0, canRedo: historyIndex < history.length - 1, showGrid, setShowGrid }),
+              e(Palette, { activeTool, setActiveTool, fontSize, setFontSize: handleFontSizeChange }),
+              e('main', { className: "w-full h-full pt-14" },
+                  e(Canvas, { svgRef, canvasState, onMouseDown: handleMouseDown, onMouseMove: handleMouseMove, onMouseUp: handleMouseUp, onMouseLeave: handleMouseLeave, onDoubleClickShape: handleDoubleClickShape, onDoubleClickText: handleDoubleClickText, editingTextId, onTextChange: handleTextChange, editingShapeId, onShapeTextChange: handleShapeTextChange, selectedElementIds, drawingLine, selectionBox, showGrid, activeTool, shapePreview, resizingState, lineHandleDragState })
+              ),
+              e(SaveModal, { isOpen: isSaveModalOpen, onClose: () => setIsSaveModalOpen(false), onSave: handleConfirmSave, t })
+          );
+      };
+
+      const AppWrapper = () => e(LanguageProvider, null, e(App));
+
+      // --- RENDER ---
+      const rootElement = document.getElementById('root');
+      const root = ReactDOM.createRoot(rootElement);
+      root.render(e(React.StrictMode, null, e(AppWrapper)));
+    </script>
+<script type="module" src="/index.tsx"></script>
+</body>
+</html>
