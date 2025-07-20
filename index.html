@@ -456,8 +456,6 @@
         const singleSelectedElement = selectedElementIds.length === 1 ? [...shapes, ...texts].find(s => s.id === selectedElementIds[0]) : null;
         const singleSelectedLine = selectedElementIds.length === 1 ? lines.find(l => l.id === selectedElementIds[0]) : null;
 
-        const allLines = drawingLine ? [...lines, drawingLine] : lines;
-
         return e('svg', { ref: svgRef, className: `w-full h-full ${cursorClass}` , width, height, onMouseDown, onMouseMove, onMouseUp, onMouseLeave, onTouchStart, onTouchMove, onTouchEnd },
             e('defs', null,
                 showGrid && e('pattern', { id: 'grid', width: GRID_SIZE, height: GRID_SIZE, patternUnits: 'userSpaceOnUse' },
@@ -470,7 +468,8 @@
                 rx: 15, ry: 15,
                 fill: 'rgba(0,0,0,0.1)', stroke: 'rgba(0,0,0,0.4)', strokeWidth: 2, strokeDasharray: '5,5'
             }),
-            allLines.map(line => {
+            // 完成した線を描画（選択状態の太さ変更あり）
+            lines.map(line => {
                 const isSelected = selectedElementIds.includes(line.id);
                 const strokeWidth = LINE_STROKES[line.type] + (isSelected ? 2 : 0);
                 const strokeColor = 'black';
@@ -484,6 +483,16 @@
                 }
                 return e('line', { key: line.id, x1: line.start.x, y1: line.start.y, x2: line.end.x, y2: line.end.y, stroke: strokeColor, strokeWidth, strokeDasharray: line.type === EcoLineType.Weak ? '5,5' : 'none', className: lineCursorClass });
             }),
+            // 描画中の線を描画（選択状態の太さ変更なし）
+            drawingLine && (() => {
+                const strokeWidth = LINE_STROKES[drawingLine.type];
+                const strokeColor = 'black';
+                
+                if (drawingLine.type === EcoLineType.Stressful) {
+                    return e('path', { key: 'drawing-line', d: generateZigzagPath(drawingLine.start, drawingLine.end), stroke: strokeColor, strokeWidth, fill: 'none' });
+                }
+                return e('line', { key: 'drawing-line', x1: drawingLine.start.x, y1: drawingLine.start.y, x2: drawingLine.end.x, y2: drawingLine.end.y, stroke: strokeColor, strokeWidth, strokeDasharray: drawingLine.type === EcoLineType.Weak ? '5,5' : 'none' });
+            })(),
             shapes.map(shape => e(ShapeComponent, { key: shape.id, shape, isSelected: selectedElementIds.includes(shape.id), onDoubleClick: onDoubleClickShape, isEditing: editingShapeId === shape.id, onTextChange: onShapeTextChange, activeTool })),
             texts.map(text => {
                 const isSelected = selectedElementIds.includes(text.id);
