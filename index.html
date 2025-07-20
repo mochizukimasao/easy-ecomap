@@ -643,15 +643,21 @@
         const getSVGPoint = useCallback((clientX, clientY) => {
             if (!svgRef.current) return { x: 0, y: 0 };
             
-            const rect = svgRef.current.getBoundingClientRect();
-            const scaleX = canvasState.width / rect.width;
-            const scaleY = canvasState.height / rect.height;
+            const pt = svgRef.current.createSVGPoint();
+            pt.x = clientX;
+            pt.y = clientY;
+            const ctm = svgRef.current.getScreenCTM();
+            if (ctm) {
+                return pt.matrixTransform(ctm.inverse());
+            }
             
+            // Fallback if getScreenCTM fails
+            const rect = svgRef.current.getBoundingClientRect();
             return {
-                x: (clientX - rect.left) * scaleX,
-                y: (clientY - rect.top) * scaleY
+                x: clientX - rect.left,
+                y: clientY - rect.top
             };
-        }, [canvasState.width, canvasState.height]);
+        }, []);
 
         const createState = useCallback((state, newState) => ({ ...state, ...newState }), []);
 
