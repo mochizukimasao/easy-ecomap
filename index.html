@@ -743,7 +743,6 @@
             width: SHAPE_SIZES.default.width, height: SHAPE_SIZES.default.height, text: t('defaultItemName'), fontSize: FONT_SIZES.medium
           };
           updateHistory(createState(canvasState, { shapes: [...canvasState.shapes, newShape] }));
-          setSelectedElementIds([id]);
         }, [canvasState, updateHistory, createState, t]);
 
         const addText = useCallback((position) => {
@@ -753,14 +752,12 @@
             width: TEXT_SIZES.default.width, height: TEXT_SIZES.default.height, text: t('defaultText'), fontSize
           };
           updateHistory(createState(canvasState, { texts: [...canvasState.texts, newText] }));
-          setSelectedElementIds([id]);
         }, [canvasState, updateHistory, createState, fontSize, t]);
 
         const addLine = useCallback((start, end, type) => {
           const id = createUniqueId();
           const newLine = { id, start, end, type };
           updateHistory(createState(canvasState, { lines: [...canvasState.lines, newLine] }));
-          setSelectedElementIds([id]);
         }, [canvasState, updateHistory, createState]);
 
         const deleteElement = useCallback((elementId) => {
@@ -878,7 +875,6 @@
               fontSize: FONT_SIZES.medium 
             };
             updateHistory(createState(canvasState, { shapes: [...canvasState.shapes, newShape] }));
-            setSelectedElementIds([id]);
             setShapePreview(null);
           }
           
