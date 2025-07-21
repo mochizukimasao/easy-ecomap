@@ -1,0 +1,45 @@
+User-agent: *
+Allow: /
+
+# Allow all search engines and AI crawlers
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Slurp
+Allow: /
+
+# AI Search Engines
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: FacebookBot
+Allow: /
+
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: LinkedInBot
+Allow: /
+
+# Claude AI (Anthropic)
+User-agent: Claude-Web
+Allow: /
+
+# Perplexity AI
+User-agent: PerplexityBot
+Allow: /
+
+# Sitemap location
+Sitemap: https://easy-ecomap.vercel.app/sitemap.xml
+
+# Crawl delay (optional, in seconds)
+Crawl-delay: 1
