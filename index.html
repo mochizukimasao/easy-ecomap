@@ -523,6 +523,10 @@
                 );
             }),
             selectionBox && e('rect', { x: selectionBox.x, y: selectionBox.y, width: selectionBox.width, height: selectionBox.height, fill: 'rgba(59, 130, 246, 0.2)', stroke: 'rgba(59, 130, 246, 0.8)', strokeWidth: '1' }),
+            singleSelectedElement && getResizeHandles(singleSelectedElement).map(handle => e('rect', {
+                key: handle.id, 'data-handle': handle.id, x: handle.x, y: handle.y, width: 8, height: 8,
+                className: `resize-handle ${handle.cursor}`
+            })),
             drawingLine && e('circle', { cx: drawingLine.start.x, cy: drawingLine.start.y, r: 6, className: 'line-start-point' })
         );
       };
