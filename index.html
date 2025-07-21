@@ -739,6 +739,29 @@
         );
       };
 
+      const Footer = () => {
+        const { t, language } = useLanguage();
+        return e('footer', { className: 'absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 py-2 px-4 z-5' },
+          e('div', { className: 'flex flex-col sm:flex-row justify-between items-center text-xs text-gray-500' },
+            e('div', { className: 'mb-1 sm:mb-0' },
+              '© 2025 Easy Ecomap. All rights reserved.'
+            ),
+            e('div', { className: 'flex gap-4' },
+              e('a', { 
+                href: `/privacy.html${language === 'en' ? '?lang=en' : ''}`, 
+                target: '_blank',
+                className: 'hover:text-gray-700 underline'
+              }, language === 'ja' ? 'プライバシーポリシー' : 'Privacy Policy'),
+              e('a', { 
+                href: `/terms.html${language === 'en' ? '?lang=en' : ''}`, 
+                target: '_blank',
+                className: 'hover:text-gray-700 underline'
+              }, language === 'ja' ? '利用規約' : 'Terms of Service')
+            )
+          )
+        );
+      };
+
       const SaveDialog = ({ isOpen, onClose, onSave, t }) => {
         const [fileFormat, setFileFormat] = useState('svg');
         const [padding, setPadding] = useState(20);
@@ -1473,7 +1496,7 @@
             setShowGrid
           }),
           e(Palette, { activeTool, setActiveTool, fontSize, setFontSize }),
-          e('div', { className: 'pt-32 h-full overflow-auto' },
+          e('div', { className: 'pt-32 pb-12 h-full overflow-auto' },
             e(Canvas, {
               canvasState,
               onMouseDown: handleMouseDown,
@@ -1496,6 +1519,7 @@
             })
           ),
           e(ToolHint, { activeTool, drawingLine, t }),
+          e(Footer),
           e(SaveDialog, {
             isOpen: saveDialogOpen,
             onClose: () => setSaveDialogOpen(false),

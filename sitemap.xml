@@ -15,6 +15,25 @@
     <xhtml:link rel="alternate" hreflang="en" href="https://easy-ecomap.vercel.app/?lang=en" />
   </url>
 
+  <!-- Legal pages -->
+  <url>
+    <loc>https://easy-ecomap.vercel.app/privacy.html</loc>
+    <lastmod>2025-01-21</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://easy-ecomap.vercel.app/privacy.html" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://easy-ecomap.vercel.app/privacy.html?lang=en" />
+  </url>
+  
+  <url>
+    <loc>https://easy-ecomap.vercel.app/terms.html</loc>
+    <lastmod>2025-01-21</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://easy-ecomap.vercel.app/terms.html" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://easy-ecomap.vercel.app/terms.html?lang=en" />
+  </url>
+
   <!-- Additional pages (if you add them later) -->
   <!-- 
   <url>
@@ -29,20 +48,6 @@
     <lastmod>2025-01-21</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
-  </url>
-  
-  <url>
-    <loc>https://easy-ecomap.vercel.app/privacy</loc>
-    <lastmod>2025-01-21</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  
-  <url>
-    <loc>https://easy-ecomap.vercel.app/terms</loc>
-    <lastmod>2025-01-21</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.5</priority>
   </url>
   -->
 
