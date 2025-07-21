@@ -836,6 +836,25 @@
           evt.preventDefault();
           const point = getSVGPoint(evt.clientX, evt.clientY);
           
+          // Check for resize handle click
+          const handleId = evt.target.dataset.handle;
+          if (handleId && selectedElementIds.length === 1) {
+            const element = [...canvasState.shapes, ...canvasState.texts].find(e => e.id === selectedElementIds[0]);
+            if (element) {
+              setResizingState({
+                elementId: element.id,
+                handle: handleId,
+                startX: element.x,
+                startY: element.y,
+                startWidth: element.width,
+                startHeight: element.height,
+                startMouseX: point.x,
+                startMouseY: point.y
+              });
+              return;
+            }
+          }
+          
           if (activeTool === 'select') {
             const elementAtPoint = findElementAt(point);
             if (elementAtPoint) {
@@ -877,7 +896,42 @@
         const handleMouseMove = useCallback((evt) => {
           const point = getSVGPoint(evt.clientX, evt.clientY);
           
-          if (isDrawingLineRef.current && drawingLine) {
+          if (resizingState) {
+            // Handle resizing
+            const { elementId, handle, startX, startY, startWidth, startHeight, startMouseX, startMouseY } = resizingState;
+            const deltaX = point.x - startMouseX;
+            const deltaY = point.y - startMouseY;
+            
+            let newX = startX, newY = startY, newWidth = startWidth, newHeight = startHeight;
+            
+            if (handle.includes('left')) {
+              newX = startX + deltaX;
+              newWidth = startWidth - deltaX;
+            }
+            if (handle.includes('right')) {
+              newWidth = startWidth + deltaX;
+            }
+            if (handle.includes('top')) {
+              newY = startY + deltaY;
+              newHeight = startHeight - deltaY;
+            }
+            if (handle.includes('bottom')) {
+              newHeight = startHeight + deltaY;
+            }
+            
+            // Apply minimum size constraints
+            newWidth = Math.max(newWidth, MIN_SHAPE_SIZE.width);
+            newHeight = Math.max(newHeight, MIN_SHAPE_SIZE.height);
+            
+            // Update element
+            const newShapes = canvasState.shapes.map(shape =>
+              shape.id === elementId ? { ...shape, x: newX, y: newY, width: newWidth, height: newHeight } : shape
+            );
+            const newTexts = canvasState.texts.map(text =>
+              text.id === elementId ? { ...text, x: newX, y: newY, width: newWidth, height: newHeight } : text
+            );
+            setCanvasState(createState(canvasState, { shapes: newShapes, texts: newTexts }));
+          } else if (isDrawingLineRef.current && drawingLine) {
             // Update line end point in real-time while dragging
             setDrawingLine(prev => ({ ...prev, end: point }));
           } else if (selectionBox) {
@@ -897,7 +951,7 @@
             const height = Math.abs(point.y - dragStartPosRef.current.y);
             setShapePreview({ x: startX, y: startY, width: Math.max(width, MIN_SHAPE_SIZE.width), height: Math.max(height, MIN_SHAPE_SIZE.height) });
           }
-        }, [getSVGPoint, drawingLine, selectionBox, selectedElementIds, moveElements, activeTool]);
+        }, [getSVGPoint, drawingLine, selectionBox, selectedElementIds, moveElements, activeTool, resizingState, canvasState, createState]);
 
         const handleMouseUp = useCallback((evt) => {
           if (isDrawingLineRef.current && drawingLine) {
@@ -938,7 +992,13 @@
           isDraggingRef.current = false;
           dragStartPosRef.current = null;
           selectedElementsStartPosRef.current = [];
-        }, [selectionBox, canvasState, selectedElementIds, updateHistory, shapePreview, createState, t, isDrawingLineRef, drawingLine, getSVGPoint, findShapeAt, addLine]);
+          
+          // Reset resize state
+          if (resizingState) {
+            updateHistory(canvasState);
+            setResizingState(null);
+          }
+        }, [selectionBox, canvasState, selectedElementIds, updateHistory, shapePreview, createState, t, isDrawingLineRef, drawingLine, getSVGPoint, findShapeAt, addLine, resizingState]);
 
         const handleMouseLeave = useCallback(() => {
           setSelectionBox(null);
