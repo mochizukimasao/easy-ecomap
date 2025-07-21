@@ -775,19 +775,28 @@
         }, [canvasState, updateHistory, createState]);
 
         const moveElements = useCallback((elementIds, deltaX, deltaY) => {
-          const newShapes = canvasState.shapes.map(shape => 
-            elementIds.includes(shape.id) ? { ...shape, x: shape.x + deltaX, y: shape.y + deltaY } : shape
-          );
-          const newTexts = canvasState.texts.map(text => 
-            elementIds.includes(text.id) ? { ...text, x: text.x + deltaX, y: text.y + deltaY } : text
-          );
-          const newLines = canvasState.lines.map(line => 
-            elementIds.includes(line.id) ? { 
+          const newShapes = canvasState.shapes.map(shape => {
+            if (!elementIds.includes(shape.id)) return shape;
+            const startPos = selectedElementsStartPosRef.current.find(e => e.id === shape.id)?.startPos;
+            return startPos ? { ...shape, x: startPos.x + deltaX, y: startPos.y + deltaY } : shape;
+          });
+          const newTexts = canvasState.texts.map(text => {
+            if (!elementIds.includes(text.id)) return text;
+            const startPos = selectedElementsStartPosRef.current.find(e => e.id === text.id)?.startPos;
+            return startPos ? { ...text, x: startPos.x + deltaX, y: startPos.y + deltaY } : text;
+          });
+          const newLines = canvasState.lines.map(line => {
+            if (!elementIds.includes(line.id)) return line;
+            const startPos = selectedElementsStartPosRef.current.find(e => e.id === line.id)?.startPos;
+            if (!startPos) return line;
+            const lineWidth = line.end.x - line.start.x;
+            const lineHeight = line.end.y - line.start.y;
+            return { 
               ...line, 
-              start: { x: line.start.x + deltaX, y: line.start.y + deltaY },
-              end: { x: line.end.x + deltaX, y: line.end.y + deltaY }
-            } : line
-          );
+              start: { x: startPos.x + deltaX, y: startPos.y + deltaY },
+              end: { x: startPos.x + deltaX + lineWidth, y: startPos.y + deltaY + lineHeight }
+            };
+          });
           setCanvasState(createState(canvasState, { shapes: newShapes, lines: newLines, texts: newTexts }));
         }, [canvasState, createState]);
 
@@ -798,12 +807,14 @@
           if (activeTool === 'select') {
             const elementAtPoint = findElementAt(point);
             if (elementAtPoint) {
+              let elementsToMove = selectedElementIds;
               if (!selectedElementIds.includes(elementAtPoint.element.id)) {
-                setSelectedElementIds([elementAtPoint.element.id]);
+                elementsToMove = [elementAtPoint.element.id];
+                setSelectedElementIds(elementsToMove);
               }
               isDraggingRef.current = true;
               dragStartPosRef.current = point;
-              selectedElementsStartPosRef.current = selectedElementIds.map(id => {
+              selectedElementsStartPosRef.current = elementsToMove.map(id => {
                 const el = [...canvasState.shapes, ...canvasState.texts, ...canvasState.lines].find(e => e.id === id);
                 return el ? { id, startPos: el.x !== undefined ? { x: el.x, y: el.y } : { x: el.start.x, y: el.start.y } } : null;
               }).filter(Boolean);
