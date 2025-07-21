@@ -712,6 +712,15 @@
           return null;
         }, [canvasState]);
 
+        const findShapeAt = useCallback((point) => {
+          return canvasState.shapes.find(shape => 
+            point.x >= shape.x && 
+            point.x <= shape.x + shape.width && 
+            point.y >= shape.y && 
+            point.y <= shape.y + shape.height
+          );
+        }, [canvasState]);
+
         const distanceToLine = (point, lineStart, lineEnd) => {
           const A = point.x - lineStart.x;
           const B = point.y - lineStart.y;
@@ -760,15 +769,17 @@
           updateHistory(createState(canvasState, { texts: [...canvasState.texts, newText] }));
         }, [canvasState, updateHistory, createState, fontSize, t]);
 
-        const addLine = useCallback((start, end, type) => {
+        const addLine = useCallback((start, end, type, startShapeId = null, endShapeId = null) => {
           const id = createUniqueId();
-          const newLine = { id, start, end, type };
+          const newLine = { id, start, end, type, startShapeId, endShapeId };
           updateHistory(createState(canvasState, { lines: [...canvasState.lines, newLine] }));
         }, [canvasState, updateHistory, createState]);
 
         const deleteElement = useCallback((elementId) => {
           const newShapes = canvasState.shapes.filter(s => s.id !== elementId);
-          const newLines = canvasState.lines.filter(l => l.id !== elementId);
+          const newLines = canvasState.lines.filter(l => 
+            l.id !== elementId && l.startShapeId !== elementId && l.endShapeId !== elementId
+          );
           const newTexts = canvasState.texts.filter(t => t.id !== elementId);
           updateHistory(createState(canvasState, { shapes: newShapes, lines: newLines, texts: newTexts }));
           setSelectedElementIds([]);
@@ -786,15 +797,31 @@
             return startPos ? { ...text, x: startPos.x + deltaX, y: startPos.y + deltaY } : text;
           });
           const newLines = canvasState.lines.map(line => {
-            if (!elementIds.includes(line.id)) return line;
-            const startPos = selectedElementsStartPosRef.current.find(e => e.id === line.id)?.startPos;
-            if (!startPos) return line;
-            const lineWidth = line.end.x - line.start.x;
-            const lineHeight = line.end.y - line.start.y;
-            return { 
-              ...line, 
-              start: { x: startPos.x + deltaX, y: startPos.y + deltaY },
-              end: { x: startPos.x + deltaX + lineWidth, y: startPos.y + deltaY + lineHeight }
+            // Direct line movement
+            if (elementIds.includes(line.id)) {
+              const startPos = selectedElementsStartPosRef.current.find(e => e.id === line.id)?.startPos;
+              if (!startPos) return line;
+              const lineWidth = line.end.x - line.start.x;
+              const lineHeight = line.end.y - line.start.y;
+              return { 
+                ...line, 
+                start: { x: startPos.x + deltaX, y: startPos.y + deltaY },
+                end: { x: startPos.x + deltaX + lineWidth, y: startPos.y + deltaY + lineHeight }
+              };
+            }
+            
+            // Line following connected shapes
+            const startShape = newShapes.find(s => s.id === line.startShapeId);
+            const endShape = newShapes.find(s => s.id === line.endShapeId);
+            
+            return {
+              ...line,
+              start: startShape ? 
+                { x: startShape.x + startShape.width/2, y: startShape.y + startShape.height/2 } : 
+                line.start,
+              end: endShape ? 
+                { x: endShape.x + endShape.width/2, y: endShape.y + endShape.height/2 } : 
+                line.end
             };
           });
           setCanvasState(createState(canvasState, { shapes: newShapes, lines: newLines, texts: newTexts }));
@@ -833,10 +860,14 @@
             }
           } else if (Object.values(EcoLineType).includes(activeTool)) {
             // Start drag-style line drawing
+            const startShape = findShapeAt(point);
+            const startPoint = startShape ? 
+              { x: startShape.x + startShape.width/2, y: startShape.y + startShape.height/2 } : 
+              point;
             isDrawingLineRef.current = true;
-            setDrawingLine({ start: point, end: point, type: activeTool });
+            setDrawingLine({ start: startPoint, end: startPoint, type: activeTool, startShapeId: startShape?.id });
           }
-        }, [activeTool, getSVGPoint, findElementAt, selectedElementIds, addText, addShape, deleteElement, canvasState, addLine]);
+        }, [activeTool, getSVGPoint, findElementAt, findShapeAt, selectedElementIds, addText, addShape, deleteElement, canvasState, addLine]);
 
         const handleMouseMove = useCallback((evt) => {
           const point = getSVGPoint(evt.clientX, evt.clientY);
@@ -867,7 +898,11 @@
           if (isDrawingLineRef.current && drawingLine) {
             // Complete the line drawing
             const point = getSVGPoint(evt.clientX, evt.clientY);
-            addLine(drawingLine.start, point, drawingLine.type);
+            const endShape = findShapeAt(point);
+            const endPoint = endShape ? 
+              { x: endShape.x + endShape.width/2, y: endShape.y + endShape.height/2 } : 
+              point;
+            addLine(drawingLine.start, endPoint, drawingLine.type, drawingLine.startShapeId, endShape?.id);
             setDrawingLine(null);
             isDrawingLineRef.current = false;
           } else if (selectionBox) {
@@ -898,7 +933,7 @@
           isDraggingRef.current = false;
           dragStartPosRef.current = null;
           selectedElementsStartPosRef.current = [];
-        }, [selectionBox, canvasState, selectedElementIds, updateHistory, shapePreview, createState, t, isDrawingLineRef, drawingLine, getSVGPoint, addLine]);
+        }, [selectionBox, canvasState, selectedElementIds, updateHistory, shapePreview, createState, t, isDrawingLineRef, drawingLine, getSVGPoint, findShapeAt, addLine]);
 
         const handleMouseLeave = useCallback(() => {
           setSelectionBox(null);
