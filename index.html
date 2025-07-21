@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=1200, initial-scale=1.0, user-scalable=yes" />
     <title>かんたんエコマップ | 無料オンラインエコマップ作成ツール - Easy Ecomap</title>
     
     <!-- SEO Meta Tags -->
@@ -572,7 +572,7 @@
         );
       };
       
-      const Canvas = ({ canvasState, onMouseDown, onMouseMove, onMouseUp, onMouseLeave, onTouchStart, onTouchMove, onTouchEnd, onDoubleClickShape, onDoubleClickText, editingTextId, onTextChange, editingShapeId, onShapeTextChange, selectedElementIds, drawingLine, selectionBox, showGrid, svgRef, activeTool, shapePreview }) => {
+      const Canvas = ({ canvasState, onMouseDown, onMouseMove, onMouseUp, onMouseLeave, onDoubleClickShape, onDoubleClickText, editingTextId, onTextChange, editingShapeId, onShapeTextChange, selectedElementIds, drawingLine, selectionBox, showGrid, svgRef, activeTool, shapePreview }) => {
         const { shapes, lines, texts, width, height } = canvasState;
         const textareaRef = useRef(null);
         
@@ -630,7 +630,7 @@
         const singleSelectedElement = selectedElementIds.length === 1 ? [...shapes, ...texts].find(s => s.id === selectedElementIds[0]) : null;
         const singleSelectedLine = selectedElementIds.length === 1 ? lines.find(l => l.id === selectedElementIds[0]) : null;
 
-        return e('svg', { ref: svgRef, className: `w-full h-full ${cursorClass}` , width, height, onMouseDown, onMouseMove, onMouseUp, onMouseLeave, onTouchStart, onTouchMove, onTouchEnd },
+        return e('svg', { ref: svgRef, className: `w-full h-full ${cursorClass}` , width, height, onMouseDown, onMouseMove, onMouseUp, onMouseLeave },
             e('defs', null,
                 showGrid && e('pattern', { id: 'grid', width: GRID_SIZE, height: GRID_SIZE, patternUnits: 'userSpaceOnUse' },
                     e('path', { d: `M ${GRID_SIZE} 0 L 0 0 0 ${GRID_SIZE}` , fill: 'none', stroke: 'rgba(0, 0, 0, 0.15)', strokeWidth: '1' })
@@ -711,20 +711,20 @@
         const getToolHint = (tool, isDrawing) => {
           const hints = {
             ja: {
-              select: 'タップで選択、ドラッグで移動、選択後の四隅をドラッグでサイズ変更',
-              text: 'タップでテキストを配置、既存テキストをダブルタップで編集',
-              shape: 'タップで項目を配置、既存項目をダブルタップで名前を編集',
-              eraser: '削除したいオブジェクトや線をタップ',
+              select: 'クリックで選択、ドラッグで移動、選択後の四隅をドラッグでサイズ変更',
+              text: 'クリックでテキストを配置、既存テキストをダブルクリックで編集',
+              shape: 'クリックで項目を配置、既存項目をダブルクリックで名前を編集',
+              eraser: '削除したいオブジェクトや線をクリック',
               Strong: isDrawing ? 'マウスを離して線を完成 (Escapeでキャンセル)' : 'ドラッグして線を描画（開始点から終了点まで）',
               Normal: isDrawing ? 'マウスを離して線を完成 (Escapeでキャンセル)' : 'ドラッグして線を描画（開始点から終了点まで）',
               Weak: isDrawing ? 'マウスを離して線を完成 (Escapeでキャンセル)' : 'ドラッグして線を描画（開始点から終了点まで）',
               Stressful: isDrawing ? 'マウスを離して線を完成 (Escapeでキャンセル)' : 'ドラッグして線を描画（開始点から終了点まで）'
             },
             en: {
-              select: 'Tap to select, drag to move, drag corners after selection to resize',
-              text: 'Tap to place text, double-tap existing text to edit',
-              shape: 'Tap to place item, double-tap existing item to edit name',
-              eraser: 'Tap objects or lines to delete',
+              select: 'Click to select, drag to move, drag corners after selection to resize',
+              text: 'Click to place text, double-click existing text to edit',
+              shape: 'Click to place item, double-click existing item to edit name',
+              eraser: 'Click objects or lines to delete',
               Strong: isDrawing ? 'Release mouse to complete line (Escape to cancel)' : 'Drag to draw line (from start point to end point)',
               Normal: isDrawing ? 'Release mouse to complete line (Escape to cancel)' : 'Drag to draw line (from start point to end point)',
               Weak: isDrawing ? 'Release mouse to complete line (Escape to cancel)' : 'Drag to draw line (from start point to end point)',
@@ -1187,46 +1187,6 @@
           selectedElementsStartPosRef.current = [];
         }, []);
 
-        const handleTouchStart = useCallback((evt) => {
-          evt.preventDefault();
-          const touch = evt.touches[0];
-          
-          // Simple touch handling - just convert to mouse event
-          const mouseEvent = new MouseEvent('mousedown', {
-            clientX: touch.clientX,
-            clientY: touch.clientY,
-            bubbles: true,
-          });
-          Object.defineProperty(mouseEvent, 'target', { value: evt.target });
-          handleMouseDown(mouseEvent);
-        }, [handleMouseDown]);
-
-        const handleTouchMove = useCallback((evt) => {
-          evt.preventDefault();
-          const touch = evt.touches[0];
-          
-          // Simple touch handling - just convert to mouse event
-          const mouseEvent = new MouseEvent('mousemove', {
-            clientX: touch.clientX,
-            clientY: touch.clientY,
-            bubbles: true,
-          });
-          handleMouseMove(mouseEvent);
-        }, [handleMouseMove]);
-
-        const handleTouchEnd = useCallback((evt) => {
-          evt.preventDefault();
-          
-          // Simple touch handling - just convert to mouse event
-          const touch = evt.changedTouches[0];
-          const mouseEvent = new MouseEvent('mouseup', {
-            clientX: touch.clientX,
-            clientY: touch.clientY,
-            bubbles: true,
-          });
-          Object.defineProperty(mouseEvent, 'target', { value: evt.target });
-          handleMouseUp(mouseEvent);
-        }, [handleMouseUp]);
 
         const handleDoubleClickShape = useCallback((shapeId) => {
           setEditingShapeId(shapeId);
@@ -1520,9 +1480,6 @@
               onMouseMove: handleMouseMove,
               onMouseUp: handleMouseUp,
               onMouseLeave: handleMouseLeave,
-              onTouchStart: handleTouchStart,
-              onTouchMove: handleTouchMove,
-              onTouchEnd: handleTouchEnd,
               onDoubleClickShape: handleDoubleClickShape,
               onDoubleClickText: handleDoubleClickText,
               editingTextId,

@@ -1,12 +1,12 @@
 {
   "name": "Easy Ecomap - かんたんエコマップ",
   "short_name": "Easy Ecomap",
-  "description": "無料でエコマップを簡単に作成できるオンラインツール",
+  "description": "PC専用エコマップ作成ツール",
   "start_url": "/",
-  "display": "standalone",
+  "display": "browser",
   "background_color": "#ffffff",
   "theme_color": "#2563eb",
-  "orientation": "any",
+  "orientation": "landscape",
   "scope": "/",
   "lang": "ja",
   "categories": ["productivity", "business", "education"],
@@ -46,27 +46,6 @@
       "type": "image/png",
       "form_factor": "wide",
       "label": "Desktop version"
-    },
-    {
-      "src": "/screenshot-mobile.png", 
-      "sizes": "390x844",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Mobile version"
-    }
-  ],
-  "shortcuts": [
-    {
-      "name": "新しいエコマップ",
-      "short_name": "New Ecomap",
-      "description": "新しいエコマップを作成",
-      "url": "/?action=new",
-      "icons": [
-        {
-          "src": "/shortcut-new.png",
-          "sizes": "192x192"
-        }
-      ]
     }
   ]
 }
