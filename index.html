@@ -1023,6 +1023,11 @@
             return startPos ? { ...text, x: startPos.x + deltaX, y: startPos.y + deltaY } : text;
           });
           const newLines = canvasState.lines.map(line => {
+            // Skip line updates if currently editing this line
+            if (lineEditingState && lineEditingState.lineId === line.id) {
+              return line;
+            }
+            
             // Direct line movement
             if (elementIds.includes(line.id)) {
               const startPos = selectedElementsStartPosRef.current.find(e => e.id === line.id)?.startPos;
@@ -1051,7 +1056,7 @@
             };
           });
           setCanvasState(createState(canvasState, { shapes: newShapes, lines: newLines, texts: newTexts }));
-        }, [canvasState, createState]);
+        }, [canvasState, createState, lineEditingState]);
 
         const handleMouseDown = useCallback((evt) => {
           evt.preventDefault();
@@ -1081,6 +1086,17 @@
           if (lineHandleType && selectedElementIds.length === 1) {
             const line = canvasState.lines.find(l => l.id === selectedElementIds[0]);
             if (line) {
+              // Temporarily disconnect the line from shapes during editing
+              const tempLine = { ...line };
+              if (lineHandleType === 'start') {
+                tempLine.startShapeId = null;
+              } else if (lineHandleType === 'end') {
+                tempLine.endShapeId = null;
+              }
+              
+              const newLines = canvasState.lines.map(l => l.id === line.id ? tempLine : l);
+              setCanvasState(createState(canvasState, { lines: newLines }));
+              
               setLineEditingState({
                 lineId: line.id,
                 handle: lineHandleType,
