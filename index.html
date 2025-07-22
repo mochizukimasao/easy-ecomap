@@ -527,7 +527,7 @@
         ];
 
         return e('div', { className: 'absolute top-16 left-0 right-0 bg-white shadow-lg border-b border-gray-200 z-10' },
-          e('div', { className: 'flex items-center justify-center gap-2 px-4 py-2 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100' },
+          e('div', { className: 'flex items-center gap-2 px-4 py-2 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100' },
             ...allTools.map(tool => createToolButton(tool, activeTool === tool.id)),
             e('div', { className: 'w-px h-6 bg-gray-300 mx-2 flex-shrink-0' }),
             ...Object.entries(FONT_SIZES).map(([name, size]) => createFontButton(name, size, fontSize === size))
@@ -702,6 +702,10 @@
                 key: handle.id, 'data-handle': handle.id, x: handle.x, y: handle.y, width: 8, height: 8,
                 className: `resize-handle ${handle.cursor}`
             })),
+            singleSelectedLine && [
+                e('circle', { key: 'line-start-handle', 'data-line-handle': 'start', cx: singleSelectedLine.start.x, cy: singleSelectedLine.start.y, r: 6, className: 'line-handle cursor-move' }),
+                e('circle', { key: 'line-end-handle', 'data-line-handle': 'end', cx: singleSelectedLine.end.x, cy: singleSelectedLine.end.y, r: 6, className: 'line-handle cursor-move' })
+            ],
             drawingLine && e('circle', { cx: drawingLine.start.x, cy: drawingLine.start.y, r: 6, className: 'line-start-point' })
         );
       };
@@ -836,6 +840,7 @@
         const [selectionBox, setSelectionBox] = useState(null);
         const [shapePreview, setShapePreview] = useState(null);
         const [resizingState, setResizingState] = useState(null);
+        const [lineEditingState, setLineEditingState] = useState(null);
         const [saveDialogOpen, setSaveDialogOpen] = useState(false);
         const [isLoading, setIsLoading] = useState(false);
         const svgRef = useRef();
@@ -952,6 +957,24 @@
           return Math.sqrt(dx * dx + dy * dy);
         };
 
+        // Auto-snap function for line endpoints to shape centers
+        const findSnapTarget = useCallback((point, threshold = 20) => {
+          const { shapes } = canvasState;
+          for (let shape of shapes) {
+            const centerX = shape.x + shape.width / 2;
+            const centerY = shape.y + shape.height / 2;
+            const distance = Math.sqrt((point.x - centerX) ** 2 + (point.y - centerY) ** 2);
+            
+            if (distance <= threshold) {
+              return {
+                point: { x: centerX, y: centerY },
+                shapeId: shape.id
+              };
+            }
+          }
+          return null;
+        }, [canvasState]);
+
         const createUniqueId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
         const addShape = useCallback((position) => {
@@ -1053,6 +1076,20 @@
             }
           }
           
+          // Check for line handle click
+          const lineHandleType = evt.target.dataset.lineHandle;
+          if (lineHandleType && selectedElementIds.length === 1) {
+            const line = canvasState.lines.find(l => l.id === selectedElementIds[0]);
+            if (line) {
+              setLineEditingState({
+                lineId: line.id,
+                handle: lineHandleType,
+                originalLine: { ...line }
+              });
+              return;
+            }
+          }
+          
           if (activeTool === 'select') {
             const elementAtPoint = findElementAt(point);
             if (elementAtPoint) {
@@ -1081,15 +1118,13 @@
               deleteElement(elementAtPoint.element.id);
             }
           } else if (Object.values(EcoLineType).includes(activeTool)) {
-            // Start drag-style line drawing
-            const startShape = findShapeAt(point);
-            const startPoint = startShape ? 
-              { x: startShape.x + startShape.width/2, y: startShape.y + startShape.height/2 } : 
-              point;
+            // Start drag-style line drawing with auto-snap
+            const snapTarget = findSnapTarget(point);
+            const startPoint = snapTarget ? snapTarget.point : point;
             isDrawingLineRef.current = true;
-            setDrawingLine({ start: startPoint, end: startPoint, type: activeTool, startShapeId: startShape?.id });
+            setDrawingLine({ start: startPoint, end: startPoint, type: activeTool, startShapeId: snapTarget?.shapeId });
           }
-        }, [activeTool, getSVGPoint, findElementAt, findShapeAt, selectedElementIds, addText, addShape, deleteElement, canvasState, addLine]);
+        }, [activeTool, getSVGPoint, findElementAt, findShapeAt, selectedElementIds, addText, addShape, deleteElement, canvasState, addLine, findSnapTarget]);
 
         const handleMouseMove = useCallback((evt) => {
           const point = getSVGPoint(evt.clientX, evt.clientY);
@@ -1129,9 +1164,37 @@
               text.id === elementId ? { ...text, x: newX, y: newY, width: newWidth, height: newHeight } : text
             );
             setCanvasState(createState(canvasState, { shapes: newShapes, texts: newTexts }));
+          } else if (lineEditingState) {
+            // Handle line editing
+            const { lineId, handle, originalLine } = lineEditingState;
+            const snapTarget = findSnapTarget(point);
+            const targetPoint = snapTarget ? snapTarget.point : point;
+            
+            const newLines = canvasState.lines.map(line => {
+              if (line.id !== lineId) return line;
+              
+              if (handle === 'start') {
+                return {
+                  ...line,
+                  start: targetPoint,
+                  startShapeId: snapTarget?.shapeId || null
+                };
+              } else if (handle === 'end') {
+                return {
+                  ...line,
+                  end: targetPoint,
+                  endShapeId: snapTarget?.shapeId || null
+                };
+              }
+              return line;
+            });
+            
+            setCanvasState(createState(canvasState, { lines: newLines }));
           } else if (isDrawingLineRef.current && drawingLine) {
-            // Update line end point in real-time while dragging
-            setDrawingLine(prev => ({ ...prev, end: point }));
+            // Update line end point in real-time while dragging with auto-snap
+            const snapTarget = findSnapTarget(point);
+            const endPoint = snapTarget ? snapTarget.point : point;
+            setDrawingLine(prev => ({ ...prev, end: endPoint }));
           } else if (selectionBox) {
             const startX = Math.min(selectionBox.x, point.x);
             const startY = Math.min(selectionBox.y, point.y);
@@ -1153,13 +1216,11 @@
 
         const handleMouseUp = useCallback((evt) => {
           if (isDrawingLineRef.current && drawingLine) {
-            // Complete the line drawing
+            // Complete the line drawing with auto-snap
             const point = getSVGPoint(evt.clientX, evt.clientY);
-            const endShape = findShapeAt(point);
-            const endPoint = endShape ? 
-              { x: endShape.x + endShape.width/2, y: endShape.y + endShape.height/2 } : 
-              point;
-            addLine(drawingLine.start, endPoint, drawingLine.type, drawingLine.startShapeId, endShape?.id);
+            const snapTarget = findSnapTarget(point);
+            const endPoint = snapTarget ? snapTarget.point : point;
+            addLine(drawingLine.start, endPoint, drawingLine.type, drawingLine.startShapeId, snapTarget?.shapeId);
             setDrawingLine(null);
             isDrawingLineRef.current = false;
           } else if (selectionBox) {
@@ -1175,6 +1236,10 @@
             setSelectionBox(null);
           } else if (isDraggingRef.current && selectedElementIds.length > 0) {
             updateHistory(canvasState);
+          } else if (lineEditingState) {
+            // Complete line editing
+            updateHistory(canvasState);
+            setLineEditingState(null);
           } else if (shapePreview) {
             const id = createUniqueId();
             const newShape = { 
@@ -1196,7 +1261,7 @@
             updateHistory(canvasState);
             setResizingState(null);
           }
-        }, [selectionBox, canvasState, selectedElementIds, updateHistory, shapePreview, createState, t, isDrawingLineRef, drawingLine, getSVGPoint, findShapeAt, addLine, resizingState]);
+        }, [selectionBox, canvasState, selectedElementIds, updateHistory, shapePreview, createState, t, isDrawingLineRef, drawingLine, getSVGPoint, findShapeAt, addLine, resizingState, lineEditingState, findSnapTarget]);
 
         const handleMouseLeave = useCallback(() => {
           setSelectionBox(null);
@@ -1206,10 +1271,14 @@
             setDrawingLine(null);
             isDrawingLineRef.current = false;
           }
+          // Cancel line editing if mouse leaves canvas
+          if (lineEditingState) {
+            setLineEditingState(null);
+          }
           isDraggingRef.current = false;
           dragStartPosRef.current = null;
           selectedElementsStartPosRef.current = [];
-        }, []);
+        }, [lineEditingState]);
 
 
         const handleDoubleClickShape = useCallback((shapeId) => {
