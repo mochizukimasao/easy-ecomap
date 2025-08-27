@@ -1433,17 +1433,14 @@
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
               }
               
-              // SVGをBase64エンコードしてDataURLとして直接使用
+              // より確実な方法：SVGをBlobとして作成し、Imageオブジェクトで読み込み
               const svgData = new XMLSerializer().serializeToString(svgElement);
+              console.log('SVG data length:', svgData.length);
+              console.log('SVG data preview:', svgData.substring(0, 200) + '...');
               
-              // SVGにフォントファミリーとスタイルを確実に適用
-              const svgWithStyles = svgData.replace(
-                '<svg',
-                `<svg style="font-family: Arial, sans-serif; font-weight: bold;" width="${svgWidth}" height="${svgHeight}" viewBox="0 0 ${svgWidth} ${svgHeight}"`
-              );
-              
-              const svgBase64 = btoa(unescape(encodeURIComponent(svgWithStyles)));
-              const svgDataUrl = `data:image/svg+xml;base64,${svgBase64}`;
+              const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+              const svgUrl = URL.createObjectURL(svgBlob);
+              console.log('SVG URL created:', svgUrl);
               
               // 画像として読み込み
               const img = new Image();
@@ -1470,18 +1467,24 @@
                     }
                   }, 'image/png', 1.0);
                   
+                  // リソースをクリーンアップ
+                  URL.revokeObjectURL(svgUrl);
                 } catch (error) {
                   console.error('Error in PNG conversion:', error);
                   alert(t('errorSavingPng'));
+                  URL.revokeObjectURL(svgUrl);
                 }
               };
               
               img.onerror = (error) => {
                 console.error('Failed to load SVG as image:', error);
+                console.error('SVG URL:', svgUrl);
+                console.error('SVG data length:', svgData.length);
                 alert(t('errorSavingPng'));
+                URL.revokeObjectURL(svgUrl);
               };
               
-              img.src = svgDataUrl;
+              img.src = svgUrl;
             } catch (error) {
               console.error('Error saving PNG:', error);
               alert(t('errorSavingPng'));
