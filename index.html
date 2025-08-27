@@ -1399,12 +1399,15 @@
                 return;
               }
               
+              // 元のviewBoxを保存
+              const originalViewBox = svgElement.getAttribute('viewBox');
+              
               // オブジェクトがある範囲を計算
               const calculateContentBounds = () => {
                 let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
                 
                 // シェイプの範囲を計算
-                shapes.forEach(shape => {
+                canvasState.shapes.forEach(shape => {
                   minX = Math.min(minX, shape.x);
                   minY = Math.min(minY, shape.y);
                   maxX = Math.max(maxX, shape.x + shape.width);
@@ -1412,7 +1415,7 @@
                 });
                 
                 // テキストの範囲を計算
-                texts.forEach(text => {
+                canvasState.texts.forEach(text => {
                   minX = Math.min(minX, text.x);
                   minY = Math.min(minY, text.y);
                   maxX = Math.max(maxX, text.x + text.width);
@@ -1420,7 +1423,7 @@
                 });
                 
                 // 線の範囲を計算
-                lines.forEach(line => {
+                canvasState.lines.forEach(line => {
                   minX = Math.min(minX, line.start.x, line.end.x);
                   minY = Math.min(minY, line.start.y, line.end.y);
                   maxX = Math.max(maxX, line.start.x, line.end.x);
@@ -1454,9 +1457,6 @@
               canvas.height = canvasHeight;
               
               console.log('Canvas size:', canvas.width, 'x', canvas.height);
-              console.log('SVG content size:', svgWidth, 'x', svgHeight);
-              console.log('Padding:', padding);
-              console.log('ViewBox:', viewBox);
               console.log('SVG width/height attributes:', svgElement.getAttribute('width'), svgElement.getAttribute('height'));
               
               // 背景を設定
@@ -1468,7 +1468,6 @@
               // セキュリティエラーを回避する方法：SVGを直接Canvasに描画
               try {
                 // SVGのviewBoxをオブジェクトの範囲に調整
-                const originalViewBox = svgElement.getAttribute('viewBox');
                 const adjustedViewBox = `${contentBounds.x} ${contentBounds.y} ${contentBounds.width} ${contentBounds.height}`;
                 svgElement.setAttribute('viewBox', adjustedViewBox);
                 
@@ -1530,6 +1529,11 @@
                   console.error('Failed to load SVG as image:', error);
                   console.error('SVG data length:', svgData.length);
                   alert(t('errorSavingPng'));
+                  
+                  // エラー時もviewBoxを元に戻す
+                  if (originalViewBox) {
+                    svgElement.setAttribute('viewBox', originalViewBox);
+                  }
                 };
                 
                 img.src = svgDataUrl;
@@ -1538,11 +1542,21 @@
                 console.error('Error creating SVG DataURL:', svgError);
                 // フォールバック：シンプルな方法でPNG保存
                 alert(t('errorSavingPng'));
+                
+                // エラー時もviewBoxを元に戻す
+                if (originalViewBox) {
+                  svgElement.setAttribute('viewBox', originalViewBox);
+                }
               }
               
             } catch (error) {
               console.error('Error saving PNG:', error);
               alert(t('errorSavingPng'));
+              
+              // エラー時もviewBoxを元に戻す
+              if (svgElement && originalViewBox) {
+                svgElement.setAttribute('viewBox', originalViewBox);
+              }
             }
           }
         }, [canvasState, showGrid, t]);
