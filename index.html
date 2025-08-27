@@ -1396,40 +1396,20 @@
                 return;
               }
               
-              // キャンバスの内容を取得（スタイルとフォントを確実に適用）
-              const svgData = new XMLSerializer().serializeToString(svgElement);
-              
-              // フォントファミリーを確実に適用
-              const svgWithFonts = svgData.replace(
-                '<svg',
-                '<svg style="font-family: Arial, sans-serif; font-weight: bold;"'
-              );
-              
-              // キャンバスのサイズを取得（viewBox、width、height属性を優先）
-              let svgWidth, svgHeight;
-              const viewBox = svgElement.getAttribute('viewBox');
-              
-              if (viewBox) {
-                const [, , vbWidth, vbHeight] = viewBox.split(' ').map(Number);
-                svgWidth = vbWidth;
-                svgHeight = vbHeight;
-              } else {
-                svgWidth = parseFloat(svgElement.getAttribute('width')) || 1200;
-                svgHeight = parseFloat(svgElement.getAttribute('height')) || 800;
-              }
-              
+              // エコマップの実際のサイズを取得
+              const svgRect = svgElement.getBoundingClientRect();
               const padding = options.padding || 20;
               
               // キャンバスを作成
               const canvas = document.createElement('canvas');
               const ctx = canvas.getContext('2d');
               
-              // キャンバスサイズを設定（エコマップのサイズ + パディング）
-              canvas.width = svgWidth + padding * 2;
-              canvas.height = svgHeight + padding * 2;
+              // キャンバスサイズを設定（実際の表示サイズ + パディング）
+              canvas.width = svgRect.width + padding * 2;
+              canvas.height = svgRect.height + padding * 2;
               
               console.log('Canvas size:', canvas.width, 'x', canvas.height);
-              console.log('Ecomap size:', svgWidth, 'x', svgHeight);
+              console.log('Ecomap display size:', svgRect.width, 'x', svgRect.height);
               console.log('Padding:', padding);
               
               // 背景を設定
@@ -1438,18 +1418,18 @@
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
               }
               
-              // エコマップをDataURLに変換
-              const svgBlob = new Blob([svgWithFonts], { type: 'image/svg+xml;charset=utf-8' });
-              const svgUrl = URL.createObjectURL(svgBlob);
+              // SVGをBase64エンコードしてDataURLとして直接使用
+              const svgData = new XMLSerializer().serializeToString(svgElement);
+              const svgBase64 = btoa(unescape(encodeURIComponent(svgData)));
+              const svgDataUrl = `data:image/svg+xml;base64,${svgBase64}`;
               
               // 画像として読み込み
               const img = new Image();
-              img.crossOrigin = 'anonymous';
               
               img.onload = () => {
                 try {
                   // 画像をキャンバスに描画
-                  ctx.drawImage(img, padding, padding, svgWidth, svgHeight);
+                  ctx.drawImage(img, padding, padding, svgRect.width, svgRect.height);
                   
                   // PNGとして保存
                   canvas.toBlob(blob => {
@@ -1462,27 +1442,24 @@
                       link.click();
                       document.body.removeChild(link);
                       URL.revokeObjectURL(downloadUrl);
+                      console.log('PNG export successful');
                     } else {
                       throw new Error('Failed to create PNG blob');
                     }
                   }, 'image/png', 1.0);
                   
-                  // リソースをクリーンアップ
-                  URL.revokeObjectURL(svgUrl);
                 } catch (error) {
                   console.error('Error in PNG conversion:', error);
                   alert(t('errorSavingPng'));
-                  URL.revokeObjectURL(svgUrl);
                 }
               };
               
-              img.onerror = () => {
-                console.error('Failed to load ecomap as image');
+              img.onerror = (error) => {
+                console.error('Failed to load SVG as image:', error);
                 alert(t('errorSavingPng'));
-                URL.revokeObjectURL(svgUrl);
               };
               
-              img.src = svgUrl;
+              img.src = svgDataUrl;
             } catch (error) {
               console.error('Error saving PNG:', error);
               alert(t('errorSavingPng'));
