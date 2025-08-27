@@ -326,7 +326,11 @@
           transparentBackground: '背景を透過する',
           cancel: 'キャンセル',
           confirmSave: '保存する',
-          errorSavingPng: 'PNGの保存に失敗しました。画像変換中にエラーが発生しました。'
+          errorSavingPng: 'PNGの保存に失敗しました。画像変換中にエラーが発生しました。',
+          saveDialogTitle: '保存オプション',
+          fileName: 'ファイル名',
+          errorSavingJson: 'JSONの保存に失敗しました。',
+          errorSavingSvg: 'SVGの保存に失敗しました。'
         },
         en: {
           name: 'English',
@@ -360,7 +364,11 @@
           transparentBackground: 'Transparent Background',
           cancel: 'Cancel',
           confirmSave: 'Save',
-          errorSavingPng: 'Failed to save PNG. There was an error converting the image.'
+          errorSavingPng: 'Failed to save PNG. There was an error converting the image.',
+          saveDialogTitle: 'Save Options',
+          fileName: 'File Name',
+          errorSavingJson: 'Failed to save JSON.',
+          errorSavingSvg: 'Failed to save SVG.'
         },
       };
 
@@ -1351,21 +1359,52 @@
           }
         }, [canvasState, createState, updateHistory]);
 
-        const handleSave = useCallback(async (format = 'svg', options = {}) => {
+        const handleSave = useCallback(async (fileName, format, options = {}) => {
           setSaveDialogOpen(false);
           
-          if (format === 'svg') {
-            const svgElement = svgRef.current;
-            if (!svgElement) return;
-            
-            const svgData = new XMLSerializer().serializeToString(svgElement);
-            const blob = new Blob([svgData], { type: 'image/svg+xml' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = 'ecomap.svg';
-            link.click();
-            URL.revokeObjectURL(url);
+          if (format === 'json') {
+            try {
+              // JSON形式で保存（データの完全性を保持）
+              const saveData = {
+                version: '1.0',
+                timestamp: new Date().toISOString(),
+                canvasState,
+                grid: showGrid,
+                canvasSize: {
+                  width: canvasState.width,
+                  height: canvasState.height
+                }
+              };
+              
+              const jsonString = JSON.stringify(saveData, null, 2);
+              const blob = new Blob([jsonString], { type: 'application/json' });
+              const url = URL.createObjectURL(blob);
+              const link = document.createElement('a');
+              link.href = url;
+              link.download = fileName;
+              link.click();
+              URL.revokeObjectURL(url);
+            } catch (error) {
+              console.error('Error saving JSON:', error);
+              alert(t('errorSavingJson'));
+            }
+          } else if (format === 'svg') {
+            try {
+              const svgElement = svgRef.current;
+              if (!svgElement) return;
+              
+              const svgData = new XMLSerializer().serializeToString(svgElement);
+              const blob = new Blob([svgData], { type: 'image/svg+xml' });
+              const url = URL.createObjectURL(blob);
+              const link = document.createElement('a');
+              link.href = url;
+              link.download = fileName;
+              link.click();
+              URL.revokeObjectURL(url);
+            } catch (error) {
+              console.error('Error saving SVG:', error);
+              alert(t('errorSavingSvg'));
+            }
           } else if (format === 'png') {
             try {
               const svgElement = svgRef.current;
@@ -1401,7 +1440,7 @@
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.href = url;
-                link.download = 'ecomap.png';
+                link.download = fileName;
                 link.click();
                 URL.revokeObjectURL(url);
               }, 'image/png');
@@ -1410,7 +1449,7 @@
               alert(t('errorSavingPng'));
             }
           }
-        }, [t]);
+        }, [canvasState, showGrid, t]);
 
         const handleLoadSVG = useCallback((evt) => {
           const file = evt.target.files[0];
