@@ -1399,30 +1399,59 @@
                 return;
               }
               
-              // エコマップの実際の内容サイズを取得
-              let svgWidth, svgHeight;
-              const viewBox = svgElement.getAttribute('viewBox');
+              // オブジェクトがある範囲を計算
+              const calculateContentBounds = () => {
+                let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                
+                // シェイプの範囲を計算
+                shapes.forEach(shape => {
+                  minX = Math.min(minX, shape.x);
+                  minY = Math.min(minY, shape.y);
+                  maxX = Math.max(maxX, shape.x + shape.width);
+                  maxY = Math.max(maxY, shape.y + shape.height);
+                });
+                
+                // テキストの範囲を計算
+                texts.forEach(text => {
+                  minX = Math.min(minX, text.x);
+                  minY = Math.min(minY, text.y);
+                  maxX = Math.max(maxX, text.x + text.width);
+                  maxY = Math.max(maxY, text.y + text.height);
+                });
+                
+                // 線の範囲を計算
+                lines.forEach(line => {
+                  minX = Math.min(minX, line.start.x, line.end.x);
+                  minY = Math.min(minY, line.start.y, line.end.y);
+                  maxX = Math.max(maxX, line.start.x, line.end.x);
+                  maxY = Math.max(maxY, line.start.y, line.end.y);
+                });
+                
+                // オブジェクトが存在しない場合はデフォルトサイズを使用
+                if (minX === Infinity) {
+                  return { x: 0, y: 0, width: 1200, height: 800 };
+                }
+                
+                return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+              };
               
-              if (viewBox) {
-                // viewBox属性から正確なサイズを取得
-                const [, , vbWidth, vbHeight] = viewBox.split(' ').map(Number);
-                svgWidth = vbWidth;
-                svgHeight = vbHeight;
-              } else {
-                // viewBoxがない場合は、width/height属性またはデフォルト値を使用
-                svgWidth = parseFloat(svgElement.getAttribute('width')) || 1200;
-                svgHeight = parseFloat(svgElement.getAttribute('height')) || 800;
-              }
-              
+              const contentBounds = calculateContentBounds();
               const padding = options.padding || 20;
+              
+              // キャンバスサイズを設定（オブジェクトの範囲 + パディング）
+              const canvasWidth = contentBounds.width + padding * 2;
+              const canvasHeight = contentBounds.height + padding * 2;
+              
+              console.log('Content bounds:', contentBounds);
+              console.log('Canvas size:', canvasWidth, 'x', canvasHeight);
+              console.log('Padding:', padding);
               
               // キャンバスを作成
               const canvas = document.createElement('canvas');
               const ctx = canvas.getContext('2d');
               
-              // キャンバスサイズを設定（SVGの内容サイズ + パディング）
-              canvas.width = svgWidth + padding * 2;
-              canvas.height = svgHeight + padding * 2;
+              canvas.width = canvasWidth;
+              canvas.height = canvasHeight;
               
               console.log('Canvas size:', canvas.width, 'x', canvas.height);
               console.log('SVG content size:', svgWidth, 'x', svgHeight);
@@ -1438,9 +1467,15 @@
               
               // セキュリティエラーを回避する方法：SVGを直接Canvasに描画
               try {
+                // SVGのviewBoxをオブジェクトの範囲に調整
+                const originalViewBox = svgElement.getAttribute('viewBox');
+                const adjustedViewBox = `${contentBounds.x} ${contentBounds.y} ${contentBounds.width} ${contentBounds.height}`;
+                svgElement.setAttribute('viewBox', adjustedViewBox);
+                
                 // SVGの内容を取得
                 const svgData = new XMLSerializer().serializeToString(svgElement);
                 console.log('SVG data length:', svgData.length);
+                console.log('Adjusted viewBox:', adjustedViewBox);
                 
                 // SVGをDataURLとして作成（セキュリティポリシーに準拠）
                 const svgDataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgData);
@@ -1451,8 +1486,12 @@
                 
                 img.onload = () => {
                   try {
-                    // 画像をキャンバスに描画（アスペクト比を保持）
-                    ctx.drawImage(img, padding, padding, svgWidth, svgHeight);
+                    // 画像をキャンバスに描画（オブジェクトの範囲に合わせて位置調整）
+                    // オブジェクトの範囲を考慮して、SVGの内容を適切な位置に描画
+                    const offsetX = padding - contentBounds.x;
+                    const offsetY = padding - contentBounds.y;
+                    
+                    ctx.drawImage(img, offsetX, offsetY);
                     
                     // PNGとして保存
                     canvas.toBlob(blob => {
@@ -1466,14 +1505,24 @@
                         document.body.removeChild(link);
                         URL.revokeObjectURL(downloadUrl);
                         console.log('PNG export successful');
+                        
+                        // viewBoxを元に戻す
+                        if (originalViewBox) {
+                          svgElement.setAttribute('viewBox', originalViewBox);
+                        }
                       } else {
                         throw new Error('Failed to create PNG blob');
                       }
-                    }, 'image/png', 1.0);
+                }, 'image/png', 1.0);
                     
                   } catch (error) {
                     console.error('Error in PNG conversion:', error);
                     alert(t('errorSavingPng'));
+                    
+                    // エラー時もviewBoxを元に戻す
+                    if (originalViewBox) {
+                      svgElement.setAttribute('viewBox', originalViewBox);
+                    }
                   }
                 };
                 
