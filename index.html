@@ -61,7 +61,7 @@
     <script src="https://cdn.tailwindcss.com/3.4.16"></script>
     <script src="https://unpkg.com/react@18.3.1/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/canvg/lib/umd.js"></script>
+
     <style>
       body {
         -webkit-font-smoothing: antialiased;
@@ -298,7 +298,7 @@
           name: '日本語',
           headerTitle: 'かんたんエコマップ',
           save: '保存',
-          loadSVG: '読込',
+          loadJSON: '読込',
           undo: '元に戻す',
           redo: 'やり直す',
           toggleGrid: 'グリッド',
@@ -330,13 +330,13 @@
           saveDialogTitle: '保存オプション',
           fileName: 'ファイル名',
           errorSavingJson: 'JSONの保存に失敗しました。',
-          errorSavingSvg: 'SVGの保存に失敗しました。'
+          fileLoadedSuccessfully: 'ファイルの読み込みが完了しました。'
         },
         en: {
           name: 'English',
           headerTitle: 'Easy Ecomap',
           save: 'Save',
-          loadSVG: 'Load',
+          loadJSON: 'Load',
           undo: 'Undo',
           redo: 'Redo',
           toggleGrid: 'Grid',
@@ -368,7 +368,7 @@
           saveDialogTitle: 'Save Options',
           fileName: 'File Name',
           errorSavingJson: 'Failed to save JSON.',
-          errorSavingSvg: 'Failed to save SVG.'
+          fileLoadedSuccessfully: 'File loaded successfully.'
         },
       };
 
@@ -543,7 +543,7 @@
         );
       };
 
-      const Header = ({ onSave, onLoadSVG, onUndo, onRedo, canUndo, canRedo, showGrid, setShowGrid }) => {
+              const Header = ({ onSave, onLoadJSON, onUndo, onRedo, canUndo, canRedo, showGrid, setShowGrid }) => {
         const { t, language, setLanguage } = useLanguage();
         const fileInputRef = useRef(null);
 
@@ -557,8 +557,8 @@
           e('div', { className: 'flex items-center gap-2 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 pb-1' },
             e('div', { className: 'flex items-center gap-1 flex-shrink-0' },
               createButton(t('save'), onSave, false, t('save'), false, true),
-              createButton(t('loadSVG'), () => fileInputRef.current?.click(), false, t('loadSVG'), false, true),
-              e('input', { type: 'file', ref: fileInputRef, onChange: onLoadSVG, accept: '.svg', className: 'hidden' })
+                              createButton(t('loadJSON'), () => fileInputRef.current?.click(), false, t('loadJSON'), false, true),
+                              e('input', { type: 'file', ref: fileInputRef, onChange: onLoadJSON, accept: '.json', className: 'hidden' })
             ),
             e('div', { className: 'w-px h-6 bg-gray-300 flex-shrink-0' }),
             e('div', { className: 'flex items-center gap-1 flex-shrink-0' },
@@ -812,7 +812,6 @@
                   className: 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
                 },
                   e('option', { value: 'json' }, 'JSON (推奨)'),
-                  e('option', { value: 'svg' }, 'SVG'),
                   e('option', { value: 'png' }, 'PNG')
                 )
               ),
@@ -1359,7 +1358,7 @@
           }
         }, [canvasState, createState, updateHistory]);
 
-        const handleSave = useCallback(async (fileName, format, options = {}) => {
+                const handleSave = useCallback(async (fileName, format, options = {}) => {
           setSaveDialogOpen(false);
           
           if (format === 'json') {
@@ -1388,62 +1387,53 @@
               console.error('Error saving JSON:', error);
               alert(t('errorSavingJson'));
             }
-          } else if (format === 'svg') {
-            try {
-              const svgElement = svgRef.current;
-              if (!svgElement) return;
-              
-              const svgData = new XMLSerializer().serializeToString(svgElement);
-              const blob = new Blob([svgData], { type: 'image/svg+xml' });
-              const url = URL.createObjectURL(blob);
-              const link = document.createElement('a');
-              link.href = url;
-              link.download = fileName;
-              link.click();
-              URL.revokeObjectURL(url);
-            } catch (error) {
-              console.error('Error saving SVG:', error);
-              alert(t('errorSavingSvg'));
-            }
           } else if (format === 'png') {
             try {
               const svgElement = svgRef.current;
               if (!svgElement) return;
               
-              const bbox = svgElement.getBBox();
+              // SVGの内容を取得
+              const svgData = new XMLSerializer().serializeToString(svgElement);
+              
+              // キャンバスサイズを取得（SVGの実際のサイズ）
+              const svgRect = svgElement.getBoundingClientRect();
               const padding = options.padding || 20;
+              
+              // キャンバスを作成
               const canvas = document.createElement('canvas');
               const ctx = canvas.getContext('2d');
               
-              canvas.width = bbox.width + padding * 2;
-              canvas.height = bbox.height + padding * 2;
+              // キャンバスサイズを設定
+              canvas.width = svgRect.width + padding * 2;
+              canvas.height = svgRect.height + padding * 2;
               
+              // 背景を設定
               if (!options.transparentBackground) {
                 ctx.fillStyle = 'white';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
               }
               
-              const svgData = new XMLSerializer().serializeToString(svgElement);
-              const modifiedSvgData = svgData.replace(
-                /<svg[^>]*>/,
-                `<svg xmlns="http://www.w3.org/2000/svg" width="${bbox.width}" height="${bbox.height}" viewBox="${bbox.x} ${bbox.y} ${bbox.width} ${bbox.height}">`
-              );
+              // SVGをPNGに変換
+              const img = new Image();
+              const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+              const url = URL.createObjectURL(svgBlob);
               
-              await canvg.Canvg.from(ctx, modifiedSvgData, {
-                offsetX: padding,
-                offsetY: padding,
-                scaleWidth: bbox.width,
-                scaleHeight: bbox.height
-              });
+              img.onload = () => {
+                ctx.drawImage(img, padding, padding, svgRect.width, svgRect.height);
+                
+                // PNGとして保存
+                canvas.toBlob(blob => {
+                  const downloadUrl = URL.createObjectURL(blob);
+                  const link = document.createElement('a');
+                  link.href = downloadUrl;
+                  link.download = fileName;
+                  link.click();
+                  URL.revokeObjectURL(downloadUrl);
+                  URL.revokeObjectURL(url);
+                }, 'image/png');
+              };
               
-              canvas.toBlob(blob => {
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = fileName;
-                link.click();
-                URL.revokeObjectURL(url);
-              }, 'image/png');
+              img.src = url;
             } catch (error) {
               console.error('Error saving PNG:', error);
               alert(t('errorSavingPng'));
@@ -1451,7 +1441,7 @@
           }
         }, [canvasState, showGrid, t]);
 
-        const handleLoadSVG = useCallback((evt) => {
+        const handleLoadJSON = useCallback((evt) => {
           const file = evt.target.files[0];
           if (!file) return;
           
@@ -1459,127 +1449,40 @@
           const reader = new FileReader();
           reader.onload = (e) => {
             try {
-              const svgContent = e.target.result;
-              const parser = new DOMParser();
-              const svgDoc = parser.parseFromString(svgContent, 'image/svg+xml');
-              const svgElement = svgDoc.querySelector('svg');
+              const jsonContent = e.target.result;
+              const saveData = JSON.parse(jsonContent);
               
-              if (!svgElement) {
-                throw new Error('Invalid SVG file');
+              // バージョンチェック
+              if (!saveData.version || !saveData.canvasState) {
+                throw new Error('Invalid JSON file format');
               }
               
-              const width = parseFloat(svgElement.getAttribute('width')) || 1200;
-              const height = parseFloat(svgElement.getAttribute('height')) || 800;
+              // キャンバス状態を復元
+              const newCanvasState = createState(canvasState, saveData.canvasState);
               
-              const shapes = [];
-              const lines = [];
-              const texts = [];
+              // グリッド設定を復元
+              if (saveData.grid !== undefined) {
+                setShowGrid(saveData.grid);
+              }
               
-              // Parse shapes (rectangles with text)
-              svgElement.querySelectorAll('g').forEach(g => {
-                const rect = g.querySelector('rect');
-                const foreignObject = g.querySelector('foreignObject');
-                if (rect && foreignObject) {
-                  const transform = g.getAttribute('transform');
-                  let x = 0, y = 0;
-                  if (transform) {
-                    const match = transform.match(/translate\(([^,]+),\s*([^)]+)\)/);
-                    if (match) {
-                      x = parseFloat(match[1]);
-                      y = parseFloat(match[2]);
-                    }
-                  }
-                  
-                  const div = foreignObject.querySelector('div');
-                  const text = div ? div.textContent || '' : '';
-                  const fontSizeStyle = div ? div.style.fontSize : '';
-                  const fontSize = fontSizeStyle ? parseFloat(fontSizeStyle) : FONT_SIZES.medium;
-                  
-                  shapes.push({
-                    id: createUniqueId(),
-                    type: EcoShapeType.Item,
-                    x,
-                    y,
-                    width: parseFloat(rect.getAttribute('width')),
-                    height: parseFloat(rect.getAttribute('height')),
-                    text,
-                    fontSize
-                  });
-                }
-              });
-              
-              // Parse texts (foreignObject without rect)
-              svgElement.querySelectorAll('foreignObject').forEach(fo => {
-                if (!fo.closest('g').querySelector('rect')) {
-                  const div = fo.querySelector('div');
-                  const text = div ? div.textContent || '' : '';
-                  const fontSizeStyle = div ? div.style.fontSize : '';
-                  const fontSize = fontSizeStyle ? parseFloat(fontSizeStyle) : FONT_SIZES.medium;
-                  
-                  texts.push({
-                    id: createUniqueId(),
-                    x: parseFloat(fo.getAttribute('x')),
-                    y: parseFloat(fo.getAttribute('y')),
-                    width: parseFloat(fo.getAttribute('width')),
-                    height: parseFloat(fo.getAttribute('height')),
-                    text,
-                    fontSize
-                  });
-                }
-              });
-              
-              // Parse lines
-              svgElement.querySelectorAll('line, path').forEach(lineElement => {
-                let lineType = EcoLineType.Normal;
-                let start, end;
-                
-                if (lineElement.tagName === 'line') {
-                  start = { x: parseFloat(lineElement.getAttribute('x1')), y: parseFloat(lineElement.getAttribute('y1')) };
-                  end = { x: parseFloat(lineElement.getAttribute('x2')), y: parseFloat(lineElement.getAttribute('y2')) };
-                  
-                  const strokeWidth = parseFloat(lineElement.getAttribute('stroke-width') || '2');
-                  const strokeDasharray = lineElement.getAttribute('stroke-dasharray');
-                  
-                  if (strokeWidth > 3) {
-                    lineType = EcoLineType.Strong;
-                  } else if (strokeDasharray) {
-                    lineType = EcoLineType.Weak;
-                  }
-                } else if (lineElement.tagName === 'path') {
-                  const d = lineElement.getAttribute('d');
-                  const pathMatch = d.match(/M\s*([^\s]+)\s+([^\s]+).*L\s*([^\s]+)\s+([^\s]+)/);
-                  if (pathMatch) {
-                    start = { x: parseFloat(pathMatch[1]), y: parseFloat(pathMatch[2]) };
-                    end = { x: parseFloat(pathMatch[3]), y: parseFloat(pathMatch[4]) };
-                    lineType = EcoLineType.Stressful;
-                  }
-                }
-                
-                if (start && end) {
-                  lines.push({
-                    id: createUniqueId(),
-                    start,
-                    end,
-                    type: lineType
-                  });
-                }
-              });
-              
-              const newState = { shapes, lines, texts, width, height };
-              updateHistory(newState);
+              // 履歴を更新
+              updateHistory(newCanvasState);
               setSelectedElementIds([]);
               setEditingShapeId(null);
               setEditingTextId(null);
+              setIsLoading(false);
+              
+              // 成功メッセージ
+              alert(t('fileLoadedSuccessfully'));
             } catch (error) {
-              console.error('Error loading SVG:', error);
+              console.error('Error loading JSON:', error);
               alert(t('errorLoadingFile'));
-            } finally {
               setIsLoading(false);
             }
           };
           reader.readAsText(file);
           evt.target.value = '';
-        }, [updateHistory, t]);
+        }, [canvasState, updateHistory, t]);
 
         // Keyboard shortcuts
         useEffect(() => {
@@ -1632,7 +1535,7 @@
         return e('div', { className: 'h-screen overflow-hidden relative' },
           e(Header, {
             onSave: () => setSaveDialogOpen(true),
-            onLoadSVG: handleLoadSVG,
+            onLoadJSON: handleLoadJSON,
             onUndo: undo,
             onRedo: redo,
             canUndo: historyIndex > 0,
