@@ -1389,23 +1389,48 @@
             }
           } else if (format === 'png') {
             try {
+              console.log('Starting PNG export...');
               const svgElement = svgRef.current;
-              if (!svgElement) return;
+              if (!svgElement) {
+                console.error('SVG element not found');
+                return;
+              }
               
-              // SVGの内容を取得
+              // SVGの内容を取得（スタイルとフォントを確実に適用）
               const svgData = new XMLSerializer().serializeToString(svgElement);
               
-              // キャンバスサイズを取得（SVGの実際のサイズ）
-              const svgRect = svgElement.getBoundingClientRect();
+              // SVGにフォントファミリーを追加
+              const svgWithFonts = svgData.replace(
+                '<svg',
+                '<svg style="font-family: Arial, sans-serif; font-weight: bold;"'
+              );
+              
+              // SVGのサイズを取得（viewBox、width、height属性を優先）
+              let svgWidth, svgHeight;
+              const viewBox = svgElement.getAttribute('viewBox');
+              
+              if (viewBox) {
+                const [, , vbWidth, vbHeight] = viewBox.split(' ').map(Number);
+                svgWidth = vbWidth;
+                svgHeight = vbHeight;
+              } else {
+                svgWidth = parseFloat(svgElement.getAttribute('width')) || 1200;
+                svgHeight = parseFloat(svgElement.getAttribute('height')) || 800;
+              }
+              
               const padding = options.padding || 20;
               
               // キャンバスを作成
               const canvas = document.createElement('canvas');
               const ctx = canvas.getContext('2d');
               
-              // キャンバスサイズを設定
-              canvas.width = svgRect.width + padding * 2;
-              canvas.height = svgRect.height + padding * 2;
+              // キャンバスサイズを設定（SVGのサイズ + パディング）
+              canvas.width = svgWidth + padding * 2;
+              canvas.height = svgHeight + padding * 2;
+              
+              console.log('Canvas size:', canvas.width, 'x', canvas.height);
+              console.log('SVG size:', svgWidth, 'x', svgHeight);
+              console.log('Padding:', padding);
               
               // 背景を設定
               if (!options.transparentBackground) {
@@ -1413,27 +1438,51 @@
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
               }
               
-              // SVGをPNGに変換
+              // SVGをDataURLに変換
+              const svgBlob = new Blob([svgWithFonts], { type: 'image/svg+xml;charset=utf-8' });
+              const svgUrl = URL.createObjectURL(svgBlob);
+              
+              // 画像として読み込み
               const img = new Image();
-              const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-              const url = URL.createObjectURL(svgBlob);
+              img.crossOrigin = 'anonymous';
               
               img.onload = () => {
-                ctx.drawImage(img, padding, padding, svgRect.width, svgRect.height);
-                
-                // PNGとして保存
-                canvas.toBlob(blob => {
-                  const downloadUrl = URL.createObjectURL(blob);
-                  const link = document.createElement('a');
-                  link.href = downloadUrl;
-                  link.download = fileName;
-                  link.click();
-                  URL.revokeObjectURL(downloadUrl);
-                  URL.revokeObjectURL(url);
-                }, 'image/png');
+                try {
+                  // 画像をキャンバスに描画
+                  ctx.drawImage(img, padding, padding, svgWidth, svgHeight);
+                  
+                  // PNGとして保存
+                  canvas.toBlob(blob => {
+                    if (blob) {
+                      const downloadUrl = URL.createObjectURL(blob);
+                      const link = document.createElement('a');
+                      link.href = downloadUrl;
+                      link.download = fileName;
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                      URL.revokeObjectURL(downloadUrl);
+                    } else {
+                      throw new Error('Failed to create PNG blob');
+                    }
+                  }, 'image/png', 1.0);
+                  
+                  // リソースをクリーンアップ
+                  URL.revokeObjectURL(svgUrl);
+                } catch (error) {
+                  console.error('Error in PNG conversion:', error);
+                  alert(t('errorSavingPng'));
+                  URL.revokeObjectURL(svgUrl);
+                }
               };
               
-              img.src = url;
+              img.onerror = () => {
+                console.error('Failed to load SVG as image');
+                alert(t('errorSavingPng'));
+                URL.revokeObjectURL(svgUrl);
+              };
+              
+              img.src = svgUrl;
             } catch (error) {
               console.error('Error saving PNG:', error);
               alert(t('errorSavingPng'));
