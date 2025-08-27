@@ -1396,21 +1396,36 @@
                 return;
               }
               
-              // エコマップの実際のサイズを取得
-              const svgRect = svgElement.getBoundingClientRect();
+              // エコマップの実際の内容サイズを取得
+              let svgWidth, svgHeight;
+              const viewBox = svgElement.getAttribute('viewBox');
+              
+              if (viewBox) {
+                // viewBox属性から正確なサイズを取得
+                const [, , vbWidth, vbHeight] = viewBox.split(' ').map(Number);
+                svgWidth = vbWidth;
+                svgHeight = vbHeight;
+              } else {
+                // viewBoxがない場合は、width/height属性またはデフォルト値を使用
+                svgWidth = parseFloat(svgElement.getAttribute('width')) || 1200;
+                svgHeight = parseFloat(svgElement.getAttribute('height')) || 800;
+              }
+              
               const padding = options.padding || 20;
               
               // キャンバスを作成
               const canvas = document.createElement('canvas');
               const ctx = canvas.getContext('2d');
               
-              // キャンバスサイズを設定（実際の表示サイズ + パディング）
-              canvas.width = svgRect.width + padding * 2;
-              canvas.height = svgRect.height + padding * 2;
+              // キャンバスサイズを設定（SVGの内容サイズ + パディング）
+              canvas.width = svgWidth + padding * 2;
+              canvas.height = svgHeight + padding * 2;
               
               console.log('Canvas size:', canvas.width, 'x', canvas.height);
-              console.log('Ecomap display size:', svgRect.width, 'x', svgRect.height);
+              console.log('SVG content size:', svgWidth, 'x', svgHeight);
               console.log('Padding:', padding);
+              console.log('ViewBox:', viewBox);
+              console.log('SVG width/height attributes:', svgElement.getAttribute('width'), svgElement.getAttribute('height'));
               
               // 背景を設定
               if (!options.transparentBackground) {
@@ -1420,7 +1435,14 @@
               
               // SVGをBase64エンコードしてDataURLとして直接使用
               const svgData = new XMLSerializer().serializeToString(svgElement);
-              const svgBase64 = btoa(unescape(encodeURIComponent(svgData)));
+              
+              // SVGにフォントファミリーとスタイルを確実に適用
+              const svgWithStyles = svgData.replace(
+                '<svg',
+                `<svg style="font-family: Arial, sans-serif; font-weight: bold;" width="${svgWidth}" height="${svgHeight}" viewBox="0 0 ${svgWidth} ${svgHeight}"`
+              );
+              
+              const svgBase64 = btoa(unescape(encodeURIComponent(svgWithStyles)));
               const svgDataUrl = `data:image/svg+xml;base64,${svgBase64}`;
               
               // 画像として読み込み
@@ -1428,8 +1450,8 @@
               
               img.onload = () => {
                 try {
-                  // 画像をキャンバスに描画
-                  ctx.drawImage(img, padding, padding, svgRect.width, svgRect.height);
+                  // 画像をキャンバスに描画（アスペクト比を保持）
+                  ctx.drawImage(img, padding, padding, svgWidth, svgHeight);
                   
                   // PNGとして保存
                   canvas.toBlob(blob => {
