@@ -1399,9 +1399,6 @@
                 return;
               }
               
-              // 元のviewBoxを保存
-              const originalViewBox = svgElement.getAttribute('viewBox');
-              
               // オブジェクトがある範囲を計算
               const calculateContentBounds = () => {
                 let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
@@ -1467,14 +1464,9 @@
               
               // セキュリティエラーを回避する方法：SVGを直接Canvasに描画
               try {
-                // SVGのviewBoxをオブジェクトの範囲に調整
-                const adjustedViewBox = `${contentBounds.x} ${contentBounds.y} ${contentBounds.width} ${contentBounds.height}`;
-                svgElement.setAttribute('viewBox', adjustedViewBox);
-                
-                // SVGの内容を取得
+                // SVGの内容を取得（viewBoxは変更しない）
                 const svgData = new XMLSerializer().serializeToString(svgElement);
                 console.log('SVG data length:', svgData.length);
-                console.log('Adjusted viewBox:', adjustedViewBox);
                 
                 // SVGをDataURLとして作成（セキュリティポリシーに準拠）
                 const svgDataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgData);
@@ -1485,12 +1477,24 @@
                 
                 img.onload = () => {
                   try {
-                    // 画像をキャンバスに描画（オブジェクトの範囲に合わせて位置調整）
+                    // 画像をキャンバスに描画
                     // オブジェクトの範囲を考慮して、SVGの内容を適切な位置に描画
-                    const offsetX = padding - contentBounds.x;
-                    const offsetY = padding - contentBounds.y;
+                    // 元のSVGのサイズを取得
+                    const svgWidth = parseFloat(svgElement.getAttribute('width')) || 1200;
+                    const svgHeight = parseFloat(svgElement.getAttribute('height')) || 800;
                     
-                    ctx.drawImage(img, offsetX, offsetY);
+                    // オブジェクトの範囲に合わせて描画位置を計算
+                    const scaleX = canvasWidth / svgWidth;
+                    const scaleY = canvasHeight / svgHeight;
+                    const scale = Math.min(scaleX, scaleY);
+                    
+                    // 中央に配置
+                    const scaledWidth = svgWidth * scale;
+                    const scaledHeight = svgHeight * scale;
+                    const offsetX = (canvasWidth - scaledWidth) / 2;
+                    const offsetY = (canvasHeight - scaledHeight) / 2;
+                    
+                    ctx.drawImage(img, offsetX, offsetY, scaledWidth, scaledHeight);
                     
                     // PNGとして保存
                     canvas.toBlob(blob => {
@@ -1504,11 +1508,6 @@
                         document.body.removeChild(link);
                         URL.revokeObjectURL(downloadUrl);
                         console.log('PNG export successful');
-                        
-                        // viewBoxを元に戻す
-                        if (originalViewBox) {
-                          svgElement.setAttribute('viewBox', originalViewBox);
-                        }
                       } else {
                         throw new Error('Failed to create PNG blob');
                       }
@@ -1517,11 +1516,6 @@
                   } catch (error) {
                     console.error('Error in PNG conversion:', error);
                     alert(t('errorSavingPng'));
-                    
-                    // エラー時もviewBoxを元に戻す
-                    if (originalViewBox) {
-                      svgElement.setAttribute('viewBox', originalViewBox);
-                    }
                   }
                 };
                 
@@ -1529,11 +1523,6 @@
                   console.error('Failed to load SVG as image:', error);
                   console.error('SVG data length:', svgData.length);
                   alert(t('errorSavingPng'));
-                  
-                  // エラー時もviewBoxを元に戻す
-                  if (originalViewBox) {
-                    svgElement.setAttribute('viewBox', originalViewBox);
-                  }
                 };
                 
                 img.src = svgDataUrl;
@@ -1542,21 +1531,11 @@
                 console.error('Error creating SVG DataURL:', svgError);
                 // フォールバック：シンプルな方法でPNG保存
                 alert(t('errorSavingPng'));
-                
-                // エラー時もviewBoxを元に戻す
-                if (originalViewBox) {
-                  svgElement.setAttribute('viewBox', originalViewBox);
-                }
               }
               
             } catch (error) {
               console.error('Error saving PNG:', error);
               alert(t('errorSavingPng'));
-              
-              // エラー時もviewBoxを元に戻す
-              if (svgElement && originalViewBox) {
-                svgElement.setAttribute('viewBox', originalViewBox);
-              }
             }
           }
         }, [canvasState, showGrid, t]);
