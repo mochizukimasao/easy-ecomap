@@ -6,8 +6,8 @@
     <title>かんたんエコマップ | 無料オンラインエコマップ作成ツール - Easy Ecomap</title>
     
     <!-- SEO Meta Tags -->
-    <meta name="description" content="無料でエコマップを簡単に作成できるオンラインツール。家族関係図やネットワーク図を直感的に描画・編集。SVGやPNG形式で保存可能。ソーシャルワーク、カウンセリング、プロジェクト管理に最適。" />
-    <meta name="keywords" content="エコマップ,家族関係図,ネットワーク図,ソーシャルワーク,カウンセリング,無料ツール,オンライン作成,SVG,PNG,関係性可視化,図表作成,ecomap" />
+    <meta name="description" content="無料でエコマップを簡単に作成できるオンラインツール。家族関係図やネットワーク図を直感的に描画・編集。JSONやPNG形式で保存可能。ソーシャルワーク、カウンセリング、プロジェクト管理に最適。" />
+    <meta name="keywords" content="エコマップ,家族関係図,ネットワーク図,ソーシャルワーク,カウンセリング,無料ツール,オンライン作成,JSON,PNG,関係性可視化,図表作成,ecomap" />
     <meta name="author" content="Easy Ecomap" />
     <meta name="robots" content="index, follow" />
     <meta name="language" content="ja" />
@@ -140,7 +140,7 @@
   "name": "Easy Ecomap",
   "alternateName": "かんたんエコマップ",
   "url": "https://easy-ecomap.vercel.app/",
-  "description": "無料でエコマップを簡単に作成できるオンラインツール。家族関係図やネットワーク図を直感的に描画・編集。SVGやPNG形式で保存可能。ソーシャルワーク、カウンセリング、プロジェクト管理に最適。",
+          "description": "無料でエコマップを簡単に作成できるオンラインツール。家族関係図やネットワーク図を直感的に描画・編集。JSONやPNG形式で保存可能。ソーシャルワーク、カウンセリング、プロジェクト管理に最適。",
   "applicationCategory": "BusinessApplication",
   "applicationSubCategory": "Productivity Tool",
   "operatingSystem": "Web Browser",
@@ -173,7 +173,7 @@
     "エコマップ作成",
     "家族関係図作成",
     "ネットワーク図作成", 
-    "SVG形式エクスポート",
+            "JSON形式エクスポート",
     "PNG形式エクスポート",
     "多言語対応",
     "リアルタイム編集",
@@ -214,7 +214,7 @@
   "datePublished": "2024-01-01",
   "description": "Professional ecomap creation tool for social workers, counselors, and professionals",
   "downloadUrl": "https://easy-ecomap.vercel.app/",
-  "featureList": ["Drag & Drop Interface", "Export to SVG/PNG", "Multi-language Support", "Real-time Collaboration"],
+          "featureList": ["Drag & Drop Interface", "Export to JSON/PNG", "Multi-language Support", "Real-time Collaboration"],
   "screenshot": "https://easy-ecomap.vercel.app/app-screenshot.png"
 }
 </script>
@@ -246,7 +246,7 @@
       "name": "作成したエコマップを保存できますか？",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "はい、SVG形式またはPNG形式で保存できます。SVG形式なら後から編集も可能です。"
+        "text": "はい、JSON形式またはPNG形式で保存できます。JSON形式なら後から編集も可能です。"
       }
     }
   ]
@@ -319,7 +319,7 @@
           defaultItemName: '',
           defaultText: 'テキストを入力',
           loading: '読み込み中...',
-          errorLoadingFile: 'ファイルの読み込みに失敗しました。有効なエコマップSVGファイルを選択してください。',
+          errorLoadingFile: 'ファイルの読み込みに失敗しました。有効なエコマップJSONファイルを選択してください。',
           saveOptions: '保存オプション',
           fileFormat: 'ファイル形式',
           padding: '余白 (px)',
@@ -357,7 +357,7 @@
           defaultItemName: '',
           defaultText: 'Enter text',
           loading: 'Loading...',
-          errorLoadingFile: 'Failed to load file. Please select a valid Ecomap SVG file.',
+          errorLoadingFile: 'Failed to load file. Please select a valid Ecomap JSON file.',
           saveOptions: 'Save Options',
           fileFormat: 'File Format',
           padding: 'Padding (px)',
@@ -782,7 +782,7 @@
         const [transparentBackground, setTransparentBackground] = useState(false);
 
         const handleSave = () => {
-          const extension = fileFormat === 'svg' ? '.svg' : fileFormat === 'png' ? '.png' : '.json';
+          const extension = fileFormat === 'png' ? '.png' : '.json';
           const fullFileName = fileName.endsWith(extension) ? fileName : fileName + extension;
           onSave(fullFileName, fileFormat, { padding, transparentBackground });
           onClose();
@@ -1396,16 +1396,16 @@
                 return;
               }
               
-              // SVGの内容を取得（スタイルとフォントを確実に適用）
+              // キャンバスの内容を取得（スタイルとフォントを確実に適用）
               const svgData = new XMLSerializer().serializeToString(svgElement);
               
-              // SVGにフォントファミリーを追加
+              // フォントファミリーを確実に適用
               const svgWithFonts = svgData.replace(
                 '<svg',
                 '<svg style="font-family: Arial, sans-serif; font-weight: bold;"'
               );
               
-              // SVGのサイズを取得（viewBox、width、height属性を優先）
+              // キャンバスのサイズを取得（viewBox、width、height属性を優先）
               let svgWidth, svgHeight;
               const viewBox = svgElement.getAttribute('viewBox');
               
@@ -1424,12 +1424,12 @@
               const canvas = document.createElement('canvas');
               const ctx = canvas.getContext('2d');
               
-              // キャンバスサイズを設定（SVGのサイズ + パディング）
+              // キャンバスサイズを設定（エコマップのサイズ + パディング）
               canvas.width = svgWidth + padding * 2;
               canvas.height = svgHeight + padding * 2;
               
               console.log('Canvas size:', canvas.width, 'x', canvas.height);
-              console.log('SVG size:', svgWidth, 'x', svgHeight);
+              console.log('Ecomap size:', svgWidth, 'x', svgHeight);
               console.log('Padding:', padding);
               
               // 背景を設定
@@ -1438,7 +1438,7 @@
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
               }
               
-              // SVGをDataURLに変換
+              // エコマップをDataURLに変換
               const svgBlob = new Blob([svgWithFonts], { type: 'image/svg+xml;charset=utf-8' });
               const svgUrl = URL.createObjectURL(svgBlob);
               
@@ -1477,7 +1477,7 @@
               };
               
               img.onerror = () => {
-                console.error('Failed to load SVG as image');
+                console.error('Failed to load ecomap as image');
                 alert(t('errorSavingPng'));
                 URL.revokeObjectURL(svgUrl);
               };
