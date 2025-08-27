@@ -1433,58 +1433,61 @@
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
               }
               
-              // より確実な方法：SVGをBlobとして作成し、Imageオブジェクトで読み込み
-              const svgData = new XMLSerializer().serializeToString(svgElement);
-              console.log('SVG data length:', svgData.length);
-              console.log('SVG data preview:', svgData.substring(0, 200) + '...');
-              
-              const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-              const svgUrl = URL.createObjectURL(svgBlob);
-              console.log('SVG URL created:', svgUrl);
-              
-              // 画像として読み込み
-              const img = new Image();
-              
-              img.onload = () => {
-                try {
-                  // 画像をキャンバスに描画（アスペクト比を保持）
-                  ctx.drawImage(img, padding, padding, svgWidth, svgHeight);
-                  
-                  // PNGとして保存
-                  canvas.toBlob(blob => {
-                    if (blob) {
-                      const downloadUrl = URL.createObjectURL(blob);
-                      const link = document.createElement('a');
-                      link.href = downloadUrl;
-                      link.download = fileName;
-                      document.body.appendChild(link);
-                      link.click();
-                      document.body.removeChild(link);
-                      URL.revokeObjectURL(downloadUrl);
-                      console.log('PNG export successful');
-                    } else {
-                      throw new Error('Failed to create PNG blob');
-                    }
-                  }, 'image/png', 1.0);
-                  
-                  // リソースをクリーンアップ
-                  URL.revokeObjectURL(svgUrl);
-                } catch (error) {
-                  console.error('Error in PNG conversion:', error);
+              // セキュリティエラーを回避する方法：SVGを直接Canvasに描画
+              try {
+                // SVGの内容を取得
+                const svgData = new XMLSerializer().serializeToString(svgElement);
+                console.log('SVG data length:', svgData.length);
+                
+                // SVGをDataURLとして作成（セキュリティポリシーに準拠）
+                const svgDataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgData);
+                console.log('SVG DataURL created');
+                
+                // 画像として読み込み
+                const img = new Image();
+                
+                img.onload = () => {
+                  try {
+                    // 画像をキャンバスに描画（アスペクト比を保持）
+                    ctx.drawImage(img, padding, padding, svgWidth, svgHeight);
+                    
+                    // PNGとして保存
+                    canvas.toBlob(blob => {
+                      if (blob) {
+                        const downloadUrl = URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.href = downloadUrl;
+                        link.download = fileName;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        URL.revokeObjectURL(downloadUrl);
+                        console.log('PNG export successful');
+                      } else {
+                        throw new Error('Failed to create PNG blob');
+                      }
+                    }, 'image/png', 1.0);
+                    
+                  } catch (error) {
+                    console.error('Error in PNG conversion:', error);
+                    alert(t('errorSavingPng'));
+                  }
+                };
+                
+                img.onerror = (error) => {
+                  console.error('Failed to load SVG as image:', error);
+                  console.error('SVG data length:', svgData.length);
                   alert(t('errorSavingPng'));
-                  URL.revokeObjectURL(svgUrl);
-                }
-              };
-              
-              img.onerror = (error) => {
-                console.error('Failed to load SVG as image:', error);
-                console.error('SVG URL:', svgUrl);
-                console.error('SVG data length:', svgData.length);
+                };
+                
+                img.src = svgDataUrl;
+                
+              } catch (svgError) {
+                console.error('Error creating SVG DataURL:', svgError);
+                // フォールバック：シンプルな方法でPNG保存
                 alert(t('errorSavingPng'));
-                URL.revokeObjectURL(svgUrl);
-              };
+              }
               
-              img.src = svgUrl;
             } catch (error) {
               console.error('Error saving PNG:', error);
               alert(t('errorSavingPng'));
