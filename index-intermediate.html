@@ -59,6 +59,9 @@
             [EcoLineType.Stressful]: 2,
         };
         
+        // オフホワイトの色を定義
+        const OFF_WHITE_COLOR = '#f5f5f5';
+        
         // --- SIMPLE LOCALIZATION ---
         const t = (key) => {
             const texts = {
@@ -186,7 +189,7 @@
                     y: shape.y,
                     width: shape.width,
                     height: shape.height,
-                    fill: 'white',
+                    fill: OFF_WHITE_COLOR,
                     stroke: isSelected ? '#3b82f6' : '#374151',
                     strokeWidth: isSelected ? 3 : 1,
                     rx: 8,
@@ -326,7 +329,7 @@
                         key: 'background',
                         width: '100%',
                         height: '100%',
-                        fill: 'white'
+                        fill: OFF_WHITE_COLOR
                     }),
                     
                     // Lines
@@ -377,7 +380,7 @@
             const handleSave = () => {
                 const svgContent = `<?xml version="1.0" encoding="UTF-8"?>
 <svg width="1200" height="800" viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
-  <rect width="100%" height="100%" fill="white"/>
+  <rect width="100%" height="100%" fill="${OFF_WHITE_COLOR}"/>
   ${lines.map(line => {
     const strokeWidth = LINE_STROKES[line.type] || 2;
     const strokeDasharray = line.type === EcoLineType.Weak ? '5,5' : 
@@ -386,7 +389,7 @@
     return `<line x1="${line.x1}" y1="${line.y1}" x2="${line.x2}" y2="${line.y2}" stroke="${stroke}" stroke-width="${strokeWidth}" stroke-dasharray="${strokeDasharray}"/>`;
   }).join('')}
   ${shapes.map(shape => 
-    `<g><rect x="${shape.x}" y="${shape.y}" width="${shape.width}" height="${shape.height}" fill="white" stroke="#374151" stroke-width="1" rx="8"/><text x="${shape.x + shape.width/2}" y="${shape.y + shape.height/2}" text-anchor="middle" dominant-baseline="middle" font-size="14px" fill="#374151">${shape.text || t('defaultItemName')}</text></g>`
+    `<g><rect x="${shape.x}" y="${shape.y}" width="${shape.width}" height="${shape.height}" fill="${OFF_WHITE_COLOR}" stroke="#374151" stroke-width="1" rx="8"/><text x="${shape.x + shape.width/2}" y="${shape.y + shape.height/2}" text-anchor="middle" dominant-baseline="middle" font-size="14px" fill="#374151">${shape.text || t('defaultItemName')}</text></g>`
   ).join('')}
   ${textElements.map(text => 
     `<text x="${text.x}" y="${text.y}" font-size="16px" fill="#374151">${text.text || t('defaultText')}</text>`

@@ -291,6 +291,9 @@
         [EcoLineType.Stressful]: 2,
       };
       const GRID_SIZE = 20;
+      
+      // オフホワイトの色を定義
+      const OFF_WHITE_COLOR = '#f5f5f5';
 
       // --- i18n ---
       const locales = {
@@ -452,7 +455,7 @@
           },
           e('rect', {
             width, height, rx: 15, ry: 15,
-            fill: 'white', stroke: strokeColor, strokeWidth
+            fill: OFF_WHITE_COLOR, stroke: strokeColor, strokeWidth
           }),
           isEditing ?
             e('foreignObject', { x: 0, y: 0, width: width, height: height },
@@ -645,11 +648,11 @@
                     e('path', { d: `M ${GRID_SIZE} 0 L 0 0 0 ${GRID_SIZE}` , fill: 'none', stroke: 'rgba(0, 0, 0, 0.15)', strokeWidth: '1' })
                 )
             ),
-            e('rect', { width: '100%', height: '100%', fill: showGrid ? 'url(#grid)' : 'white' }),
+            e('rect', { width: '100%', height: '100%', fill: showGrid ? 'url(#grid)' : OFF_WHITE_COLOR }),
             shapePreview && e('rect', {
                 x: shapePreview.x, y: shapePreview.y, width: shapePreview.width, height: shapePreview.height,
                 rx: 15, ry: 15,
-                fill: 'rgba(0,0,0,0.1)', stroke: 'rgba(0,0,0,0.4)', strokeWidth: 2, strokeDasharray: '5,5'
+                fill: OFF_WHITE_COLOR, stroke: 'rgba(0,0,0,0.4)', strokeWidth: 2, strokeDasharray: '5,5'
             }),
             // 完成した線を描画（選択状態の太さ変更あり）
             lines.map(line => {
@@ -695,7 +698,7 @@
                             onBlur: () => onTextChange(text.id, text.text, true),
                             onKeyDown: (evt) => { if (evt.key === 'Enter' && !evt.shiftKey && !evt.altKey && !evt.metaKey) { evt.preventDefault(); onTextChange(text.id, text.text, true); }},
                             style: { fontSize: `${text.fontSize}px` },
-                            className: "w-full h-full p-1 border border-blue-500 rounded-md resize-none bg-white text-black"
+                            className: "w-full h-full p-1 border border-blue-500 rounded-md resize-none bg-gray-50 text-black"
                         })
                     ) : e('foreignObject', { x: 0, y: 0, width: text.width, height: text.height, onDoubleClick: () => onDoubleClickText(text.id) },
                         e('div', {
@@ -1429,7 +1432,7 @@
               
               // 背景を設定
               if (!options.transparentBackground) {
-                ctx.fillStyle = 'white';
+                ctx.fillStyle = OFF_WHITE_COLOR;
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
               }
               
