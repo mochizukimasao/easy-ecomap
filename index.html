@@ -1454,7 +1454,6 @@
               canvas.height = canvasHeight;
               
               console.log('Canvas size:', canvas.width, 'x', canvas.height);
-              console.log('SVG width/height attributes:', svgElement.getAttribute('width'), svgElement.getAttribute('height'));
               
               // 背景を設定
               if (!options.transparentBackground) {
@@ -1462,76 +1461,169 @@
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
               }
               
-              // セキュリティエラーを回避する方法：SVGを直接Canvasに描画
-              try {
-                // SVGの内容を取得（viewBoxは変更しない）
-                const svgData = new XMLSerializer().serializeToString(svgElement);
-                console.log('SVG data length:', svgData.length);
+              // 新しいSVGを作成（オブジェクトの範囲に合わせて調整）
+              const createOptimizedSVG = () => {
+                const svgNS = 'http://www.w3.org/2000/svg';
+                const newSvg = document.createElementNS(svgNS, 'svg');
                 
-                // SVGをDataURLとして作成（セキュリティポリシーに準拠）
-                const svgDataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgData);
-                console.log('SVG DataURL created');
+                // SVGの属性を設定
+                newSvg.setAttribute('width', canvasWidth);
+                newSvg.setAttribute('height', canvasHeight);
+                newSvg.setAttribute('viewBox', `0 0 ${canvasWidth} ${canvasHeight}`);
+                newSvg.setAttribute('xmlns', svgNS);
                 
-                // 画像として読み込み
-                const img = new Image();
+                // 背景（グリッドなし）
+                if (!options.transparentBackground) {
+                  const bgRect = document.createElementNS(svgNS, 'rect');
+                  bgRect.setAttribute('width', '100%');
+                  bgRect.setAttribute('height', '100%');
+                  bgRect.setAttribute('fill', OFF_WHITE_COLOR);
+                  newSvg.appendChild(bgRect);
+                }
                 
-                img.onload = () => {
-                  try {
-                    // 画像をキャンバスに描画
-                    // オブジェクトの範囲を考慮して、SVGの内容を適切な位置に描画
-                    // 元のSVGのサイズを取得
-                    const svgWidth = parseFloat(svgElement.getAttribute('width')) || 1200;
-                    const svgHeight = parseFloat(svgElement.getAttribute('height')) || 800;
-                    
-                    // オブジェクトの範囲に合わせて描画位置を計算
-                    const scaleX = canvasWidth / svgWidth;
-                    const scaleY = canvasHeight / svgHeight;
-                    const scale = Math.min(scaleX, scaleY);
-                    
-                    // 中央に配置
-                    const scaledWidth = svgWidth * scale;
-                    const scaledHeight = svgHeight * scale;
-                    const offsetX = (canvasWidth - scaledWidth) / 2;
-                    const offsetY = (canvasHeight - scaledHeight) / 2;
-                    
-                    ctx.drawImage(img, offsetX, offsetY, scaledWidth, scaledHeight);
-                    
-                    // PNGとして保存
-                    canvas.toBlob(blob => {
-                      if (blob) {
-                        const downloadUrl = URL.createObjectURL(blob);
-                        const link = document.createElement('a');
-                        link.href = downloadUrl;
-                        link.download = fileName;
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                        URL.revokeObjectURL(downloadUrl);
-                        console.log('PNG export successful');
-                      } else {
-                        throw new Error('Failed to create PNG blob');
-                      }
-                }, 'image/png', 1.0);
-                    
-                  } catch (error) {
-                    console.error('Error in PNG conversion:', error);
-                    alert(t('errorSavingPng'));
+                // シェイプを描画
+                canvasState.shapes.forEach(shape => {
+                  const rect = document.createElementNS(svgNS, 'rect');
+                  const adjustedX = shape.x - contentBounds.x + padding;
+                  const adjustedY = shape.y - contentBounds.y + padding;
+                  
+                  rect.setAttribute('x', adjustedX);
+                  rect.setAttribute('y', adjustedY);
+                  rect.setAttribute('width', shape.width);
+                  rect.setAttribute('height', shape.height);
+                  rect.setAttribute('rx', '15');
+                  rect.setAttribute('ry', '15');
+                  rect.setAttribute('fill', OFF_WHITE_COLOR);
+                  rect.setAttribute('stroke', 'black');
+                  rect.setAttribute('stroke-width', '2');
+                  
+                  newSvg.appendChild(rect);
+                  
+                  // テキストを描画
+                  if (shape.text) {
+                    const text = document.createElementNS(svgNS, 'text');
+                    text.setAttribute('x', adjustedX + shape.width / 2);
+                    text.setAttribute('y', adjustedY + shape.height / 2);
+                    text.setAttribute('text-anchor', 'middle');
+                    text.setAttribute('dominant-baseline', 'middle');
+                    text.setAttribute('font-size', shape.fontSize || FONT_SIZES.medium);
+                    text.setAttribute('font-weight', 'bold');
+                    text.setAttribute('fill', 'black');
+                    text.textContent = shape.text;
+                    newSvg.appendChild(text);
                   }
-                };
+                });
                 
-                img.onerror = (error) => {
-                  console.error('Failed to load SVG as image:', error);
-                  console.error('SVG data length:', svgData.length);
+                // テキスト要素を描画
+                canvasState.texts.forEach(text => {
+                  const textElement = document.createElementNS(svgNS, 'text');
+                  const adjustedX = text.x - contentBounds.x + padding;
+                  const adjustedY = text.y - contentBounds.y + padding;
+                  
+                  textElement.setAttribute('x', adjustedX);
+                  textElement.setAttribute('y', adjustedY + text.height / 2);
+                  textElement.setAttribute('font-size', text.fontSize);
+                  textElement.setAttribute('fill', 'black');
+                  textElement.setAttribute('dominant-baseline', 'middle');
+                  textElement.textContent = text.text;
+                  newSvg.appendChild(textElement);
+                });
+                
+                // 線を描画
+                canvasState.lines.forEach(line => {
+                  const adjustedStartX = line.start.x - contentBounds.x + padding;
+                  const adjustedStartY = line.start.y - contentBounds.y + padding;
+                  const adjustedEndX = line.end.x - contentBounds.x + padding;
+                  const adjustedEndY = line.end.y - contentBounds.y + padding;
+                  
+                  if (line.type === EcoLineType.Stressful) {
+                    // ジグザグ線の描画
+                    const path = document.createElementNS(svgNS, 'path');
+                    const dx = adjustedEndX - adjustedStartX;
+                    const dy = adjustedEndY - adjustedStartY;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    const segments = Math.max(2, Math.floor(distance / 15));
+                    const amplitude = 8;
+                    
+                    let pathData = `M ${adjustedStartX} ${adjustedStartY} `;
+                    for (let i = 1; i < segments; i++) {
+                      const t = i / segments;
+                      const x = adjustedStartX + dx * t;
+                      const y = adjustedStartY + dy * t;
+                      const perpDx = -dy / distance;
+                      const perpDy = dx / distance;
+                      const offsetX = perpDx * amplitude * (i % 2 === 0 ? 1 : -1);
+                      const offsetY = perpDy * amplitude * (i % 2 === 0 ? 1 : -1);
+                      pathData += `L ${x + offsetX} ${y + offsetY} `;
+                    }
+                    pathData += `L ${adjustedEndX} ${adjustedEndY}`;
+                    
+                    path.setAttribute('d', pathData);
+                    path.setAttribute('stroke', 'black');
+                    path.setAttribute('stroke-width', LINE_STROKES[line.type]);
+                    path.setAttribute('fill', 'none');
+                    newSvg.appendChild(path);
+                  } else {
+                    // 通常の線の描画
+                    const lineElement = document.createElementNS(svgNS, 'line');
+                    lineElement.setAttribute('x1', adjustedStartX);
+                    lineElement.setAttribute('y1', adjustedStartY);
+                    lineElement.setAttribute('x2', adjustedEndX);
+                    lineElement.setAttribute('y2', adjustedEndY);
+                    lineElement.setAttribute('stroke', 'black');
+                    lineElement.setAttribute('stroke-width', LINE_STROKES[line.type]);
+                    if (line.type === EcoLineType.Weak) {
+                      lineElement.setAttribute('stroke-dasharray', '5,5');
+                    }
+                    newSvg.appendChild(lineElement);
+                  }
+                });
+                
+                return newSvg;
+              };
+              
+              // 最適化されたSVGを作成
+              const optimizedSvg = createOptimizedSVG();
+              const svgData = new XMLSerializer().serializeToString(optimizedSvg);
+              const svgDataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgData);
+              
+              // 画像として読み込み
+              const img = new Image();
+              
+              img.onload = () => {
+                try {
+                  // 画像をキャンバスに描画（余白を考慮）
+                  ctx.drawImage(img, 0, 0, canvasWidth, canvasHeight);
+                  
+                  // PNGとして保存
+                  canvas.toBlob(blob => {
+                    if (blob) {
+                      const downloadUrl = URL.createObjectURL(blob);
+                      const link = document.createElement('a');
+                      link.href = downloadUrl;
+                      link.download = fileName;
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                      URL.revokeObjectURL(downloadUrl);
+                      console.log('PNG export successful');
+                    } else {
+                      throw new Error('Failed to create PNG blob');
+                    }
+                  }, 'image/png', 1.0);
+                  
+                } catch (error) {
+                  console.error('Error in PNG conversion:', error);
                   alert(t('errorSavingPng'));
-                };
-                
-                img.src = svgDataUrl;
-                
-              } catch (svgError) {
-                console.error('Error creating SVG DataURL:', svgError);
-                // フォールバック：シンプルな方法でPNG保存
+                }
+              };
+              
+              img.onerror = (error) => {
+                console.error('Failed to load SVG as image:', error);
                 alert(t('errorSavingPng'));
-              }
+              };
+              
+              img.src = svgDataUrl;
               
             } catch (error) {
               console.error('Error saving PNG:', error);
