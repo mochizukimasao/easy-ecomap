@@ -321,7 +321,7 @@
       const GRID_SIZE = 20;
 
       // オフホワイトの色を定義
-      const OFF_WHITE_COLOR = '#f5f5f5';
+      const OFF_WHITE_COLOR = '#f9f9f9';
 
       // --- i18n ---
       const locales = {
@@ -1587,7 +1587,7 @@
 
               // 背景を設定
               if (!options.transparentBackground) {
-                ctx.fillStyle = '#f8f9fa';
+                ctx.fillStyle = 'white';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
               }
 
@@ -1607,7 +1607,7 @@
                   const bgRect = document.createElementNS(svgNS, 'rect');
                   bgRect.setAttribute('width', '100%');
                   bgRect.setAttribute('height', '100%');
-                  bgRect.setAttribute('fill', '#f8f9fa');
+                  bgRect.setAttribute('fill', 'white');
                   newSvg.appendChild(bgRect);
                 }
 
@@ -1623,7 +1623,7 @@
                   rect.setAttribute('height', shape.height);
                   rect.setAttribute('rx', '15');
                   rect.setAttribute('ry', '15');
-                  rect.setAttribute('fill', '#ffffff');
+                  rect.setAttribute('fill', OFF_WHITE_COLOR);
                   rect.setAttribute('stroke', 'black');
                   rect.setAttribute('stroke-width', '2');
 
@@ -1714,7 +1714,7 @@
 
               // 最適化されたSVGを作成
               const optimizedSvg = createOptimizedSVG();
-              
+
               // currentColorを実際の色に置き換え
               const replaceCurrentColor = (element) => {
                 const elements = element.querySelectorAll ? element.querySelectorAll('*') : [];
@@ -1726,7 +1726,7 @@
                     el.setAttribute('fill', 'black');
                   }
                 });
-                
+
                 // 自身の属性もチェック
                 if (element.getAttribute && element.getAttribute('stroke') === 'currentColor') {
                   element.setAttribute('stroke', 'black');
@@ -1735,9 +1735,9 @@
                   element.setAttribute('fill', 'black');
                 }
               };
-              
+
               replaceCurrentColor(optimizedSvg);
-              
+
               const svgData = new XMLSerializer().serializeToString(optimizedSvg);
               const svgDataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgData);
 
