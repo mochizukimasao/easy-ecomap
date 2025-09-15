@@ -24,7 +24,7 @@
     <xhtml:link rel="alternate" hreflang="ja" href="https://easy-ecomap.vercel.app/privacy.html" />
     <xhtml:link rel="alternate" hreflang="en" href="https://easy-ecomap.vercel.app/privacy.html?lang=en" />
   </url>
-  
+
   <url>
     <loc>https://easy-ecomap.vercel.app/terms.html</loc>
     <lastmod>2025-01-21</lastmod>
@@ -34,21 +34,23 @@
     <xhtml:link rel="alternate" hreflang="en" href="https://easy-ecomap.vercel.app/terms.html?lang=en" />
   </url>
 
-  <!-- Additional pages (if you add them later) -->
-  <!-- 
+  <!-- Help and documentation pages -->
   <url>
-    <loc>https://easy-ecomap.vercel.app/about</loc>
+    <loc>https://easy-ecomap.vercel.app/manual.html</loc>
     <lastmod>2025-01-21</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://easy-ecomap.vercel.app/manual.html" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://easy-ecomap.vercel.app/manual.html?lang=en" />
   </url>
-  
+
   <url>
-    <loc>https://easy-ecomap.vercel.app/help</loc>
+    <loc>https://easy-ecomap.vercel.app/faq.html</loc>
     <lastmod>2025-01-21</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://easy-ecomap.vercel.app/faq.html" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://easy-ecomap.vercel.app/faq.html?lang=en" />
   </url>
-  -->
 
 </urlset>

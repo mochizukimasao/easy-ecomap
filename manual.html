@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>操作マニュアル | かんたんエコマップ - Easy Ecomap</title>
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="かんたんエコマップの詳細な操作マニュアル。エコマップ作成の基本操作から高度な機能まで、ステップバイステップで説明します。" />
+    <meta name="keywords" content="エコマップ,操作マニュアル,使い方,ガイド,チュートリアル,家族関係図,ネットワーク図" />
+    <meta name="author" content="Easy Ecomap" />
+    <meta name="robots" content="index, follow" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://easy-ecomap.vercel.app/manual.html" />
+    <meta property="og:title" content="操作マニュアル | かんたんエコマップ" />
+    <meta property="og:description" content="かんたんエコマップの詳細な操作マニュアル。エコマップ作成の基本操作から高度な機能まで説明します。" />
+    <meta property="og:image" content="https://easy-ecomap.vercel.app/og-image.png" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="操作マニュアル | かんたんエコマップ" />
+    <meta name="twitter:description" content="かんたんエコマップの詳細な操作マニュアル。エコマップ作成の基本操作から高度な機能まで説明します。" />
+    <meta name="twitter:image" content="https://easy-ecomap.vercel.app/og-image.png" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+
+    <style>
+      body {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+      }
+
+      .gradient-bg {
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+      }
+
+      .adobe-header {
+        background: linear-gradient(to right, #f9fafb, #ffffff);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      }
+
+      .adobe-button {
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        transition: all 0.2s ease;
+      }
+
+      .adobe-button:hover {
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        transform: translateY(-1px);
+      }
+
+      .adobe-card {
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border-radius: 12px;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      }
+    </style>
+  </head>
+
+  <body class="gradient-bg min-h-screen">
+    <!-- Header -->
+    <header class="adobe-header sticky top-0 z-50">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+          <div class="flex items-center gap-4">
+            <a href="/" class="text-xl font-bold text-gray-800 hover:text-blue-600 transition-colors">
+              かんたんエコマップ
+            </a>
+            <div class="hidden md:flex items-center gap-2 text-sm">
+              <a href="/manual.html" class="text-blue-600 bg-blue-50 px-2 py-1 rounded font-medium">マニュアル</a>
+              <a href="/faq.html"
+                class="text-gray-600 hover:text-blue-600 transition-colors px-2 py-1 rounded hover:bg-gray-100">FAQ</a>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <a href="/"
+              class="text-gray-600 hover:text-blue-600 transition-colors px-3 py-2 rounded-md text-sm font-medium">ホームに戻る</a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div class="adobe-card p-8">
+        <h1 class="text-4xl font-bold text-gray-900 mb-8">操作マニュアル</h1>
+
+        <!-- Table of Contents -->
+        <div class="bg-blue-50 border-l-4 border-blue-400 p-6 mb-8">
+          <h2 class="text-lg font-semibold text-blue-800 mb-4">目次</h2>
+          <ul class="space-y-2 text-blue-700">
+            <li><a href="#basic" class="hover:underline">1. 基本的な使い方</a></li>
+            <li><a href="#tools" class="hover:underline">2. ツールの使い方</a></li>
+            <li><a href="#shapes" class="hover:underline">3. 図形の操作</a></li>
+            <li><a href="#lines" class="hover:underline">4. 線の描画</a></li>
+            <li><a href="#text" class="hover:underline">5. テキストの追加・編集</a></li>
+            <li><a href="#save" class="hover:underline">6. 保存・読み込み</a></li>
+            <li><a href="#shortcuts" class="hover:underline">7. キーボードショートカット</a></li>
+            <li><a href="#tips" class="hover:underline">8. 便利な機能とコツ</a></li>
+          </ul>
+        </div>
+
+        <!-- Basic Usage -->
+        <section id="basic" class="mb-12">
+          <h2 class="text-3xl font-bold text-gray-900 mb-6">1. 基本的な使い方</h2>
+          <div class="prose max-w-none">
+            <p class="text-lg text-gray-700 mb-4">
+              かんたんエコマップは、ブラウザ上で直感的にエコマップを作成できる無料ツールです。
+            </p>
+            <div class="bg-gray-50 p-6 rounded-lg mb-6">
+              <h3 class="text-xl font-semibold mb-4">エコマップとは？</h3>
+              <p class="text-gray-700">
+                エコマップ（Ecomap）は、個人や家族を取り巻く社会環境や人間関係を図式化したものです。
+                ソーシャルワークやカウンセリング分野で広く使用されており、関係性を視覚的に理解するのに役立ちます。
+              </p>
+            </div>
+            <ol class="list-decimal list-inside space-y-3 text-gray-700">
+              <li>ブラウザでページを開く</li>
+              <li>ツールバーから必要なツールを選択</li>
+              <li>キャンバス上でクリック・ドラッグして要素を配置</li>
+              <li>要素をダブルクリックしてテキストを編集</li>
+              <li>完成したら保存ボタンでファイルに保存</li>
+            </ol>
+          </div>
+        </section>
+
+        <!-- Tools -->
+        <section id="tools" class="mb-12">
+          <h2 class="text-3xl font-bold text-gray-900 mb-6">2. ツールの使い方</h2>
+          <div class="grid md:grid-cols-2 gap-6">
+            <div class="bg-white p-6 rounded-lg shadow-sm border">
+              <h3 class="text-xl font-semibold mb-3 text-blue-600">選択ツール</h3>
+              <p class="text-gray-700 mb-3">要素を選択・移動・サイズ変更する基本ツール</p>
+              <ul class="text-sm text-gray-600 space-y-1">
+                <li>• クリック：要素を選択</li>
+                <li>• ドラッグ：要素を移動</li>
+                <li>• 四隅をドラッグ：サイズ変更</li>
+                <li>• 複数選択：ドラッグで範囲選択</li>
+              </ul>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-sm border">
+              <h3 class="text-xl font-semibold mb-3 text-green-600">項目追加ツール</h3>
+              <p class="text-gray-700 mb-3">新しい項目（四角形）を追加</p>
+              <ul class="text-sm text-gray-600 space-y-1">
+                <li>• クリック：項目を配置</li>
+                <li>• ドラッグ：サイズを指定して配置</li>
+                <li>• ダブルクリック：テキスト編集</li>
+              </ul>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-sm border">
+              <h3 class="text-xl font-semibold mb-3 text-purple-600">テキストツール</h3>
+              <p class="text-gray-700 mb-3">自由なテキストを追加</p>
+              <ul class="text-sm text-gray-600 space-y-1">
+                <li>• クリック：テキストを配置</li>
+                <li>• ダブルクリック：編集モード</li>
+                <li>• Enter：編集完了</li>
+              </ul>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-sm border">
+              <h3 class="text-xl font-semibold mb-3 text-red-600">消しゴムツール</h3>
+              <p class="text-gray-700 mb-3">不要な要素を削除</p>
+              <ul class="text-sm text-gray-600 space-y-1">
+                <li>• クリック：要素を削除</li>
+                <li>• 複数削除：選択後にDeleteキー</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- Shapes -->
+        <section id="shapes" class="mb-12">
+          <h2 class="text-3xl font-bold text-gray-900 mb-6">3. 図形の操作</h2>
+          <div class="space-y-6">
+            <div class="bg-white p-6 rounded-lg shadow-sm border">
+              <h3 class="text-xl font-semibold mb-4">図形の移動</h3>
+              <ol class="list-decimal list-inside space-y-2 text-gray-700">
+                <li>選択ツールをクリック</li>
+                <li>移動したい図形をクリックして選択</li>
+                <li>図形をドラッグして目的の位置に移動</li>
+              </ol>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-sm border">
+              <h3 class="text-xl font-semibold mb-4">図形のサイズ変更</h3>
+              <ol class="list-decimal list-inside space-y-2 text-gray-700">
+                <li>図形を選択</li>
+                <li>四隅または辺に表示されるハンドルをドラッグ</li>
+                <li>最小サイズは自動的に制限されます</li>
+              </ol>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-sm border">
+              <h3 class="text-xl font-semibold mb-4">図形のテキスト編集</h3>
+              <ol class="list-decimal list-inside space-y-2 text-gray-700">
+                <li>図形をダブルクリック</li>
+                <li>テキストを編集</li>
+                <li>Enterキーまたは他の場所をクリックで完了</li>
+              </ol>
+            </div>
+          </div>
+        </section>
+
+        <!-- Lines -->
+        <section id="lines" class="mb-12">
+          <h2 class="text-3xl font-bold text-gray-900 mb-6">4. 線の描画</h2>
+          <div class="space-y-6">
+            <div class="bg-white p-6 rounded-lg shadow-sm border">
+              <h3 class="text-xl font-semibold mb-4">線の種類</h3>
+              <div class="grid md:grid-cols-2 gap-4">
+                <div class="flex items-center space-x-3">
+                  <div class="w-16 h-1 bg-black"></div>
+                  <span class="text-sm font-medium">強い・肯定的な関係</span>
+                </div>
+                <div class="flex items-center space-x-3">
+                  <div class="w-16 h-0.5 bg-black"></div>
+                  <span class="text-sm font-medium">普通の関係</span>
+                </div>
+                <div class="flex items-center space-x-3">
+                  <div class="w-16 h-0.5 bg-black border-dashed border-t-2"></div>
+                  <span class="text-sm font-medium">希薄・疎遠な関係</span>
+                </div>
+                <div class="flex items-center space-x-3">
+                  <div class="w-16 h-0.5 bg-black"
+                    style="background: repeating-linear-gradient(90deg, #000 0px, #000 4px, transparent 4px, transparent 8px);">
+                  </div>
+                  <span class="text-sm font-medium">ストレス・葛藤関係</span>
+                </div>
+              </div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-sm border">
+              <h3 class="text-xl font-semibold mb-4">線の描画方法</h3>
+              <ol class="list-decimal list-inside space-y-2 text-gray-700">
+                <li>線の種類を選択（強い・普通・希薄・ストレス）</li>
+                <li>開始点から終了点までドラッグ</li>
+                <li>図形の中心に近づけると自動的にスナップ</li>
+                <li>マウスを離すと線が完成</li>
+              </ol>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-sm border">
+              <h3 class="text-xl font-semibold mb-4">線の編集</h3>
+              <ol class="list-decimal list-inside space-y-2 text-gray-700">
+                <li>線を選択</li>
+                <li>両端のハンドルをドラッグして位置調整</li>
+                <li>線を移動して全体の位置を変更</li>
+              </ol>
+            </div>
+          </div>
+        </section>
+
+        <!-- Text -->
+        <section id="text" class="mb-12">
+          <h2 class="text-3xl font-bold text-gray-900 mb-6">5. テキストの追加・編集</h2>
+          <div class="space-y-6">
+            <div class="bg-white p-6 rounded-lg shadow-sm border">
+              <h3 class="text-xl font-semibold mb-4">テキストの追加</h3>
+              <ol class="list-decimal list-inside space-y-2 text-gray-700">
+                <li>テキストツールを選択</li>
+                <li>キャンバス上の任意の場所をクリック</li>
+                <li>テキストを入力</li>
+                <li>Enterキーで確定</li>
+              </ol>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-sm border">
+              <h3 class="text-xl font-semibold mb-4">テキストの編集</h3>
+              <ol class="list-decimal list-inside space-y-2 text-gray-700">
+                <li>テキストをダブルクリック</li>
+                <li>編集モードでテキストを修正</li>
+                <li>Enterキーまたは他の場所をクリックで完了</li>
+              </ol>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-sm border">
+              <h3 class="text-xl font-semibold mb-4">文字サイズの変更</h3>
+              <ol class="list-decimal list-inside space-y-2 text-gray-700">
+                <li>テキストまたは図形を選択</li>
+                <li>ツールバーの文字サイズボタンをクリック</li>
+                <li>小・中・大から選択</li>
+              </ol>
+            </div>
+          </div>
+        </section>
+
+        <!-- Save -->
+        <section id="save" class="mb-12">
+          <h2 class="text-3xl font-bold text-gray-900 mb-6">6. 保存・読み込み</h2>
+          <div class="space-y-6">
+            <div class="bg-white p-6 rounded-lg shadow-sm border">
+              <h3 class="text-xl font-semibold mb-4">JSON形式での保存（推奨）</h3>
+              <ul class="list-disc list-inside space-y-2 text-gray-700">
+                <li>後から編集可能</li>
+                <li>データの完全性が保たれる</li>
+                <li>図形、線、テキストのすべての情報を保持</li>
+                <li>ファイルサイズが小さい</li>
+              </ul>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-sm border">
+              <h3 class="text-xl font-semibold mb-4">PNG形式での保存</h3>
+              <ul class="list-disc list-inside space-y-2 text-gray-700">
+                <li>画像として保存</li>
+                <li>印刷やプレゼンテーションに適している</li>
+                <li>余白の調整が可能</li>
+                <li>背景の透過設定が可能</li>
+              </ul>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-sm border">
+              <h3 class="text-xl font-semibold mb-4">ファイルの読み込み</h3>
+              <ol class="list-decimal list-inside space-y-2 text-gray-700">
+                <li>「読込」ボタンをクリック</li>
+                <li>保存したJSONファイルを選択</li>
+                <li>自動的にエコマップが復元される</li>
+              </ol>
+            </div>
+          </div>
+        </section>
+
+        <!-- Shortcuts -->
+        <section id="shortcuts" class="mb-12">
+          <h2 class="text-3xl font-bold text-gray-900 mb-6">7. キーボードショートカット</h2>
+          <div class="bg-white p-6 rounded-lg shadow-sm border">
+            <div class="grid md:grid-cols-2 gap-6">
+              <div>
+                <h3 class="text-lg font-semibold mb-4">基本操作</h3>
+                <div class="space-y-2">
+                  <div class="flex justify-between">
+                    <span class="text-gray-700">元に戻す</span>
+                    <kbd class="px-2 py-1 bg-gray-100 rounded text-sm">Ctrl+Z</kbd>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-700">やり直す</span>
+                    <kbd class="px-2 py-1 bg-gray-100 rounded text-sm">Ctrl+Y</kbd>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-700">削除</span>
+                    <kbd class="px-2 py-1 bg-gray-100 rounded text-sm">Delete</kbd>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-700">キャンセル</span>
+                    <kbd class="px-2 py-1 bg-gray-100 rounded text-sm">Escape</kbd>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <h3 class="text-lg font-semibold mb-4">編集操作</h3>
+                <div class="space-y-2">
+                  <div class="flex justify-between">
+                    <span class="text-gray-700">テキスト編集完了</span>
+                    <kbd class="px-2 py-1 bg-gray-100 rounded text-sm">Enter</kbd>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-700">改行（テキスト編集中）</span>
+                    <kbd class="px-2 py-1 bg-gray-100 rounded text-sm">Shift+Enter</kbd>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Tips -->
+        <section id="tips" class="mb-12">
+          <h2 class="text-3xl font-bold text-gray-900 mb-6">8. 便利な機能とコツ</h2>
+          <div class="space-y-6">
+            <div class="bg-blue-50 p-6 rounded-lg border-l-4 border-blue-400">
+              <h3 class="text-xl font-semibold mb-3 text-blue-800">グリッド表示</h3>
+              <p class="text-blue-700">
+                ヘッダーの「グリッド」チェックボックスで、背景にグリッドを表示できます。
+                要素の配置を整列させるのに便利です。
+              </p>
+            </div>
+            <div class="bg-green-50 p-6 rounded-lg border-l-4 border-green-400">
+              <h3 class="text-xl font-semibold mb-3 text-green-800">自動スナップ機能</h3>
+              <p class="text-green-700">
+                線を描画する際、図形の中心に近づけると自動的にスナップします。
+                正確な接続が簡単にできます。
+              </p>
+            </div>
+            <div class="bg-yellow-50 p-6 rounded-lg border-l-4 border-yellow-400">
+              <h3 class="text-xl font-semibold mb-3 text-yellow-800">複数選択</h3>
+              <p class="text-yellow-700">
+                選択ツールでドラッグして範囲を指定すると、複数の要素を一度に選択できます。
+                選択後は一括で移動や削除が可能です。
+              </p>
+            </div>
+            <div class="bg-purple-50 p-6 rounded-lg border-l-4 border-purple-400">
+              <h3 class="text-xl font-semibold mb-3 text-purple-800">履歴機能</h3>
+              <p class="text-purple-700">
+                すべての操作は履歴に保存されます。「元に戻す」「やり直す」ボタンで
+                任意の時点に戻ることができます。
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Back to App -->
+        <div class="text-center mt-12">
+          <a href="/" class="adobe-button text-white px-8 py-3 rounded-lg font-semibold inline-block">
+            アプリを開く
+          </a>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 mt-16">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div class="flex flex-col sm:flex-row justify-between items-center text-xs text-gray-500">
+          <div class="mb-2 sm:mb-0">
+            <span class="font-medium text-gray-700">© 2025 Easy Ecomap</span>
+            <span class="mx-1">by</span>
+            <span class="font-medium text-gray-700">mochizuki masao</span>
+            <span class="ml-1">All rights reserved.</span>
+          </div>
+          <div class="flex flex-wrap gap-3 text-xs">
+            <a href="/manual.html" class="text-gray-500 hover:text-blue-600 transition-colors">マニュアル</a>
+            <span class="text-gray-300">|</span>
+            <a href="/faq.html" class="text-gray-500 hover:text-blue-600 transition-colors">FAQ</a>
+            <span class="text-gray-300">|</span>
+            <a href="/privacy.html" class="text-gray-500 hover:text-blue-600 transition-colors">プライバシーポリシー</a>
+            <span class="text-gray-300">|</span>
+            <a href="/terms.html" class="text-gray-500 hover:text-blue-600 transition-colors">利用規約</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </body>
+
+</html>

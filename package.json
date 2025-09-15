@@ -1,5 +1,58 @@
 {
   "name": "かんたんエコマップ-(easy-ecomap)",
   "private": true,
-  "version": "0.0.0"
+  "version": "1.0.0",
+  "description": "無料でエコマップを簡単に作成できるオンラインツール",
+  "main": "index.html",
+  "scripts": {
+    "dev": "./start-dev.sh",
+    "start": "python3 -m http.server 3000",
+    "start:live": "npx live-server --port=8080 --open=/index.html",
+    "build": "echo 'Production build completed - static files ready for deployment'",
+    "lint": "npx htmlhint *.html",
+    "format": "npx prettier --write *.html *.css *.js *.json",
+    "serve": "python3 -m http.server 3000",
+    "open": "open http://localhost:3000",
+    "test": "echo 'No tests specified'",
+    "clean": "rm -rf node_modules package-lock.json",
+    "install:dev": "npm install --save-dev live-server htmlhint prettier"
+  },
+  "keywords": [
+    "エコマップ",
+    "家族関係図",
+    "ネットワーク図",
+    "ソーシャルワーク",
+    "カウンセリング",
+    "無料ツール",
+    "オンライン作成",
+    "JSON",
+    "PNG",
+    "関係性可視化",
+    "図表作成",
+    "ecomap"
+  ],
+  "author": "mochizuki masao",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mochizuki/easy-ecomap.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mochizuki/easy-ecomap/issues"
+  },
+  "homepage": "https://easy-ecomap.vercel.app/",
+  "devDependencies": {
+    "live-server": "^1.2.2",
+    "htmlhint": "^1.1.4",
+    "prettier": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ]
 }

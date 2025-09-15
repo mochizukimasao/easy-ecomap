@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>よくある質問 | かんたんエコマップ - Easy Ecomap</title>
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="かんたんエコマップのよくある質問（FAQ）。使用方法、機能、トラブルシューティングなど、よく寄せられる質問にお答えします。" />
+    <meta name="keywords" content="エコマップ,FAQ,よくある質問,ヘルプ,サポート,トラブルシューティング" />
+    <meta name="author" content="Easy Ecomap" />
+    <meta name="robots" content="index, follow" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://easy-ecomap.vercel.app/faq.html" />
+    <meta property="og:title" content="よくある質問 | かんたんエコマップ" />
+    <meta property="og:description" content="かんたんエコマップのよくある質問（FAQ）。使用方法、機能、トラブルシューティングなど、よく寄せられる質問にお答えします。" />
+    <meta property="og:image" content="https://easy-ecomap.vercel.app/og-image.png" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="よくある質問 | かんたんエコマップ" />
+    <meta name="twitter:description" content="かんたんエコマップのよくある質問（FAQ）。使用方法、機能、トラブルシューティングなど、よく寄せられる質問にお答えします。" />
+    <meta name="twitter:image" content="https://easy-ecomap.vercel.app/og-image.png" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+
+    <style>
+      body {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+      }
+
+      .gradient-bg {
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+      }
+
+      .adobe-header {
+        background: linear-gradient(to right, #f9fafb, #ffffff);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      }
+
+      .adobe-button {
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        transition: all 0.2s ease;
+      }
+
+      .adobe-button:hover {
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        transform: translateY(-1px);
+      }
+
+      .adobe-card {
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border-radius: 12px;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      }
+
+      .faq-item {
+        transition: all 0.3s ease;
+      }
+
+      .faq-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      }
+    </style>
+  </head>
+
+  <body class="gradient-bg min-h-screen">
+    <!-- Header -->
+    <header class="adobe-header sticky top-0 z-50">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+          <div class="flex items-center gap-4">
+            <a href="/" class="text-xl font-bold text-gray-800 hover:text-blue-600 transition-colors">
+              かんたんエコマップ
+            </a>
+            <div class="hidden md:flex items-center gap-2 text-sm">
+              <a href="/manual.html"
+                class="text-gray-600 hover:text-blue-600 transition-colors px-2 py-1 rounded hover:bg-gray-100">マニュアル</a>
+              <a href="/faq.html" class="text-blue-600 bg-blue-50 px-2 py-1 rounded font-medium">FAQ</a>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <a href="/"
+              class="text-gray-600 hover:text-blue-600 transition-colors px-3 py-2 rounded-md text-sm font-medium">ホームに戻る</a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div class="adobe-card p-8">
+        <h1 class="text-4xl font-bold text-gray-900 mb-8">よくある質問（FAQ）</h1>
+
+        <!-- Search Box -->
+        <div class="mb-8">
+          <div class="relative">
+            <input type="text" id="searchInput" placeholder="質問を検索..."
+              class="w-full px-4 py-3 pl-10 pr-4 text-gray-700 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- FAQ Categories -->
+        <div class="mb-8">
+          <h2 class="text-2xl font-bold text-gray-900 mb-6">カテゴリ別</h2>
+          <div class="flex flex-wrap gap-2">
+            <button
+              class="category-btn px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-medium hover:bg-blue-200 transition-colors"
+              data-category="all">すべて</button>
+            <button
+              class="category-btn px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-sm font-medium hover:bg-gray-200 transition-colors"
+              data-category="basic">基本操作</button>
+            <button
+              class="category-btn px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-sm font-medium hover:bg-gray-200 transition-colors"
+              data-category="save">保存・読み込み</button>
+            <button
+              class="category-btn px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-sm font-medium hover:bg-gray-200 transition-colors"
+              data-category="trouble">トラブル</button>
+            <button
+              class="category-btn px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-sm font-medium hover:bg-gray-200 transition-colors"
+              data-category="feature">機能</button>
+          </div>
+        </div>
+
+        <!-- FAQ Items -->
+        <div class="space-y-6" id="faqContainer">
+          <!-- Basic Questions -->
+          <div class="faq-item bg-white p-6 rounded-lg shadow-sm border" data-category="basic">
+            <h3 class="text-lg font-semibold text-gray-900 mb-3">エコマップとは何ですか？</h3>
+            <p class="text-gray-700">
+              エコマップ（Ecomap）は、個人や家族を取り巻く社会環境や人間関係を図式化したものです。
+              ソーシャルワークやカウンセリング分野で広く使用されており、関係性を視覚的に理解するのに役立ちます。
+              中心に個人や家族を置き、周囲に家族、友人、職場、学校、地域社会などの関係を線で結んで表現します。
+            </p>
+          </div>
+
+          <div class="faq-item bg-white p-6 rounded-lg shadow-sm border" data-category="basic">
+            <h3 class="text-lg font-semibold text-gray-900 mb-3">Easy Ecomapは無料で使えますか？</h3>
+            <p class="text-gray-700">
+              はい、Easy Ecomapは完全無料でご利用いただけます。登録不要で、ブラウザ上ですぐにエコマップの作成を始められます。
+              機能制限もなく、作成したエコマップの保存・読み込みも無料で行えます。
+            </p>
+          </div>
+
+          <div class="faq-item bg-white p-6 rounded-lg shadow-sm border" data-category="basic">
+            <h3 class="text-lg font-semibold text-gray-900 mb-3">どのブラウザで使用できますか？</h3>
+            <p class="text-gray-700">
+              Chrome、Firefox、Safari、Edgeなどの主要なブラウザで使用できます。
+              ただし、最新バージョンの使用を推奨します。古いブラウザでは一部機能が正常に動作しない場合があります。
+            </p>
+          </div>
+
+          <!-- Save/Load Questions -->
+          <div class="faq-item bg-white p-6 rounded-lg shadow-sm border" data-category="save">
+            <h3 class="text-lg font-semibold text-gray-900 mb-3">作成したエコマップを保存できますか？</h3>
+            <p class="text-gray-700">
+              はい、JSON形式またはPNG形式で保存できます。
+              <br><strong>JSON形式（推奨）：</strong>後から編集可能で、データの完全性が保たれます。
+              <br><strong>PNG形式：</strong>画像として保存され、印刷やプレゼンテーションに適しています。
+            </p>
+          </div>
+
+          <div class="faq-item bg-white p-6 rounded-lg shadow-sm border" data-category="save">
+            <h3 class="text-lg font-semibold text-gray-900 mb-3">保存したファイルを後で読み込めますか？</h3>
+            <p class="text-gray-700">
+              JSON形式で保存したファイルは、後から読み込んで編集を続けることができます。
+              「読込」ボタンからファイルを選択するだけで、以前の状態を完全に復元できます。
+              PNG形式のファイルは画像として保存されるため、編集はできません。
+            </p>
+          </div>
+
+          <div class="faq-item bg-white p-6 rounded-lg shadow-sm border" data-category="save">
+            <h3 class="text-lg font-semibold text-gray-900 mb-3">データはどこに保存されますか？</h3>
+            <p class="text-gray-700">
+              作成したエコマップのデータは、お使いのデバイスにダウンロードされます。
+              サーバーには保存されないため、プライバシーが保護されます。
+              定期的にJSON形式で保存することをお勧めします。
+            </p>
+          </div>
+
+          <!-- Feature Questions -->
+          <div class="faq-item bg-white p-6 rounded-lg shadow-sm border" data-category="feature">
+            <h3 class="text-lg font-semibold text-gray-900 mb-3">線の種類はどのように使い分けますか？</h3>
+            <p class="text-gray-700">
+              線の種類は関係の強さや性質を表現します：
+              <br>• <strong>太い線：</strong>強い・肯定的な関係
+              <br>• <strong>普通の線：</strong>一般的な関係
+              <br>• <strong>点線：</strong>希薄・疎遠な関係
+              <br>• <strong>ジグザグ線：</strong>ストレス・葛藤関係
+            </p>
+          </div>
+
+          <div class="faq-item bg-white p-6 rounded-lg shadow-sm border" data-category="feature">
+            <h3 class="text-lg font-semibold text-gray-900 mb-3">複数の要素を一度に選択・移動できますか？</h3>
+            <p class="text-gray-700">
+              はい、選択ツールでドラッグして範囲を指定すると、複数の要素を一度に選択できます。
+              選択後は一括で移動や削除が可能です。また、Ctrlキー（MacではCmdキー）を押しながらクリックすることで、
+              個別に要素を追加選択することもできます。
+            </p>
+          </div>
+
+          <div class="faq-item bg-white p-6 rounded-lg shadow-sm border" data-category="feature">
+            <h3 class="text-lg font-semibold text-gray-900 mb-3">グリッド機能はどのように使いますか？</h3>
+            <p class="text-gray-700">
+              ヘッダーの「グリッド」チェックボックスをオンにすると、背景にグリッドが表示されます。
+              これにより、要素の配置を整列させやすくなります。グリッドは表示のみで、保存時には含まれません。
+            </p>
+          </div>
+
+          <!-- Troubleshooting Questions -->
+          <div class="faq-item bg-white p-6 rounded-lg shadow-sm border" data-category="trouble">
+            <h3 class="text-lg font-semibold text-gray-900 mb-3">操作を間違えてしまいました。元に戻せますか？</h3>
+            <p class="text-gray-700">
+              はい、「元に戻す」ボタン（Ctrl+Z）で直前の操作を取り消すことができます。
+              「やり直す」ボタン（Ctrl+Y）で取り消した操作を再実行することも可能です。
+              すべての操作は履歴に保存されているため、任意の時点に戻ることができます。
+            </p>
+          </div>
+
+          <div class="faq-item bg-white p-6 rounded-lg shadow-sm border" data-category="trouble">
+            <h3 class="text-lg font-semibold text-gray-900 mb-3">ファイルの読み込みでエラーが発生します</h3>
+            <p class="text-gray-700">
+              以下の点を確認してください：
+              <br>• ファイルがJSON形式であることを確認
+              <br>• ファイルが破損していないか確認
+              <br>• ブラウザのキャッシュをクリアして再試行
+              <br>• 別のブラウザで試してみる
+              <br>それでも解決しない場合は、ファイルを再保存してから読み込み直してください。
+            </p>
+          </div>
+
+          <div class="faq-item bg-white p-6 rounded-lg shadow-sm border" data-category="trouble">
+            <h3 class="text-lg font-semibold text-gray-900 mb-3">PNGの保存でエラーが発生します</h3>
+            <p class="text-gray-700">
+              PNG保存でエラーが発生する場合：
+              <br>• ブラウザのポップアップブロックを無効にする
+              <br>• 別のブラウザで試してみる
+              <br>• エコマップのサイズを小さくして再試行
+              <br>• JSON形式で保存してから、別の方法で画像化する
+            </p>
+          </div>
+
+          <div class="faq-item bg-white p-6 rounded-lg shadow-sm border" data-category="trouble">
+            <h3 class="text-lg font-semibold text-gray-900 mb-3">テキストの編集ができません</h3>
+            <p class="text-gray-700">
+              テキストを編集するには：
+              <br>• テキスト要素をダブルクリックする
+              <br>• 編集モードになったら、テキストを修正
+              <br>• Enterキーまたは他の場所をクリックで完了
+              <br>ダブルクリックが反応しない場合は、一度クリックで選択してからダブルクリックしてください。
+            </p>
+          </div>
+
+          <!-- Advanced Questions -->
+          <div class="faq-item bg-white p-6 rounded-lg shadow-sm border" data-category="feature">
+            <h3 class="text-lg font-semibold text-gray-900 mb-3">キーボードショートカットはありますか？</h3>
+            <p class="text-gray-700">
+              以下のキーボードショートカットが使用できます：
+              <br>• <kbd class="px-2 py-1 bg-gray-100 rounded text-sm">Ctrl+Z</kbd> 元に戻す
+              <br>• <kbd class="px-2 py-1 bg-gray-100 rounded text-sm">Ctrl+Y</kbd> やり直す
+              <br>• <kbd class="px-2 py-1 bg-gray-100 rounded text-sm">Delete</kbd> 選択要素を削除
+              <br>• <kbd class="px-2 py-1 bg-gray-100 rounded text-sm">Escape</kbd> 操作をキャンセル
+              <br>• <kbd class="px-2 py-1 bg-gray-100 rounded text-sm">Enter</kbd> テキスト編集完了
+            </p>
+          </div>
+
+          <div class="faq-item bg-white p-6 rounded-lg shadow-sm border" data-category="feature">
+            <h3 class="text-lg font-semibold text-gray-900 mb-3">エコマップのサイズを変更できますか？</h3>
+            <p class="text-gray-700">
+              現在のバージョンでは、キャンバスサイズは固定されています。
+              ただし、要素のサイズは個別に調整可能です。
+              大きなエコマップを作成する場合は、要素を小さく配置するか、
+              複数のエコマップに分けて作成することをお勧めします。
+            </p>
+          </div>
+
+          <div class="faq-item bg-white p-6 rounded-lg shadow-sm border" data-category="feature">
+            <h3 class="text-lg font-semibold text-gray-900 mb-3">多言語対応していますか？</h3>
+            <p class="text-gray-700">
+              はい、日本語と英語に対応しています。
+              ヘッダーの言語選択メニューから切り替えることができます。
+              インターフェースの言語が変更され、操作説明も選択した言語で表示されます。
+            </p>
+          </div>
+        </div>
+
+        <!-- Contact Section -->
+        <div class="mt-12 bg-blue-50 p-6 rounded-lg border-l-4 border-blue-400">
+          <h3 class="text-xl font-semibold text-blue-800 mb-3">まだ質問がありますか？</h3>
+          <p class="text-blue-700 mb-4">
+            このFAQで解決しない問題や、追加のサポートが必要な場合は、
+            詳細な操作マニュアルをご確認ください。
+          </p>
+          <div class="flex space-x-4">
+            <a href="/manual.html" class="adobe-button text-white px-6 py-2 rounded-lg font-semibold inline-block">
+              詳細マニュアルを見る
+            </a>
+            <a href="/"
+              class="bg-white text-blue-600 px-6 py-2 rounded-lg font-semibold border border-blue-300 hover:bg-blue-50 transition-colors inline-block">
+              アプリを開く
+            </a>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 mt-16">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div class="flex flex-col sm:flex-row justify-between items-center text-xs text-gray-500">
+          <div class="mb-2 sm:mb-0">
+            <span class="font-medium text-gray-700">© 2025 Easy Ecomap</span>
+            <span class="mx-1">by</span>
+            <span class="font-medium text-gray-700">mochizuki masao</span>
+            <span class="ml-1">All rights reserved.</span>
+          </div>
+          <div class="flex flex-wrap gap-3 text-xs">
+            <a href="/manual.html" class="text-gray-500 hover:text-blue-600 transition-colors">マニュアル</a>
+            <span class="text-gray-300">|</span>
+            <a href="/faq.html" class="text-gray-500 hover:text-blue-600 transition-colors">FAQ</a>
+            <span class="text-gray-300">|</span>
+            <a href="/privacy.html" class="text-gray-500 hover:text-blue-600 transition-colors">プライバシーポリシー</a>
+            <span class="text-gray-300">|</span>
+            <a href="/terms.html" class="text-gray-500 hover:text-blue-600 transition-colors">利用規約</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // FAQ Search and Filter Functionality
+      document.addEventListener('DOMContentLoaded', function () {
+        const searchInput = document.getElementById('searchInput');
+        const categoryButtons = document.querySelectorAll('.category-btn');
+        const faqItems = document.querySelectorAll('.faq-item');
+
+        // Search functionality
+        searchInput.addEventListener('input', function () {
+          const searchTerm = this.value.toLowerCase();
+          filterFAQs(searchTerm, 'all');
+        });
+
+        // Category filter functionality
+        categoryButtons.forEach(button => {
+          button.addEventListener('click', function () {
+            const category = this.dataset.category;
+
+            // Update button states
+            categoryButtons.forEach(btn => {
+              btn.className = btn.className.replace('bg-blue-100 text-blue-800', 'bg-gray-100 text-gray-700');
+            });
+            this.className = this.className.replace('bg-gray-100 text-gray-700', 'bg-blue-100 text-blue-800');
+
+            // Clear search and filter by category
+            searchInput.value = '';
+            filterFAQs('', category);
+          });
+        });
+
+        function filterFAQs(searchTerm, category) {
+          faqItems.forEach(item => {
+            const text = item.textContent.toLowerCase();
+            const itemCategory = item.dataset.category;
+
+            const matchesSearch = searchTerm === '' || text.includes(searchTerm);
+            const matchesCategory = category === 'all' || itemCategory === category;
+
+            if (matchesSearch && matchesCategory) {
+              item.style.display = 'block';
+            } else {
+              item.style.display = 'none';
+            }
+          });
+        }
+      });
+    </script>
+  </body>
+
+</html>

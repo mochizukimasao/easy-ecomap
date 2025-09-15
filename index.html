@@ -1,18 +1,20 @@
 <!DOCTYPE html>
 <html lang="ja">
-<head>
+
+  <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=1200, initial-scale=1.0, user-scalable=yes" />
     <title>かんたんエコマップ | 無料オンラインエコマップ作成ツール - Easy Ecomap</title>
-    
+
     <!-- SEO Meta Tags -->
-    <meta name="description" content="無料でエコマップを簡単に作成できるオンラインツール。家族関係図やネットワーク図を直感的に描画・編集。JSONやPNG形式で保存可能。ソーシャルワーク、カウンセリング、プロジェクト管理に最適。" />
+    <meta name="description"
+      content="無料でエコマップを簡単に作成できるオンラインツール。家族関係図やネットワーク図を直感的に描画・編集。JSONやPNG形式で保存可能。ソーシャルワーク、カウンセリング、プロジェクト管理に最適。" />
     <meta name="keywords" content="エコマップ,家族関係図,ネットワーク図,ソーシャルワーク,カウンセリング,無料ツール,オンライン作成,JSON,PNG,関係性可視化,図表作成,ecomap" />
     <meta name="author" content="Easy Ecomap" />
     <meta name="robots" content="index, follow" />
     <meta name="language" content="ja" />
     <link rel="canonical" href="https://easy-ecomap.vercel.app/" />
-    
+
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://easy-ecomap.vercel.app/" />
@@ -23,14 +25,14 @@
     <meta property="og:image:height" content="630" />
     <meta property="og:locale" content="ja_JP" />
     <meta property="og:site_name" content="Easy Ecomap" />
-    
+
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:url" content="https://easy-ecomap.vercel.app/" />
     <meta name="twitter:title" content="かんたんエコマップ | 無料オンラインエコマップ作成ツール" />
     <meta name="twitter:description" content="無料でエコマップを簡単に作成できるオンラインツール。家族関係図やネットワーク図を直感的に描画・編集。" />
     <meta name="twitter:image" content="https://easy-ecomap.vercel.app/og-image.png" />
-    
+
     <!-- AI Search Engines -->
     <meta name="application-name" content="Easy Ecomap" />
     <meta name="application-url" content="https://easy-ecomap.vercel.app/" />
@@ -41,14 +43,14 @@
     <meta name="coverage" content="Worldwide" />
     <meta name="distribution" content="Global" />
     <meta name="rating" content="General" />
-    
+
     <!-- Favicon and Icons -->
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
     <link rel="manifest" href="/site.webmanifest" />
-    
+
     <!-- Performance optimizations -->
     <link rel="preconnect" href="https://cdn.tailwindcss.com" />
     <link rel="preconnect" href="https://unpkg.com" />
@@ -56,7 +58,7 @@
     <link rel="dns-prefetch" href="https://cdn.tailwindcss.com" />
     <link rel="dns-prefetch" href="https://unpkg.com" />
     <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
-    
+
     <!-- Critical CSS should be inlined, external scripts loaded synchronously for proper initialization -->
     <script src="https://cdn.tailwindcss.com/3.4.16"></script>
     <script src="https://unpkg.com/react@18.3.1/umd/react.development.js"></script>
@@ -68,72 +70,97 @@
         -moz-osx-font-smoothing: grayscale;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
       }
+
       /* Custom scrollbar for foreignObject textarea */
       textarea::-webkit-scrollbar {
         width: 8px;
       }
+
       textarea::-webkit-scrollbar-track {
         background: #f1f1f1;
       }
+
       textarea::-webkit-scrollbar-thumb {
         background: #888;
         border-radius: 4px;
       }
+
       textarea::-webkit-scrollbar-thumb:hover {
         background: #555;
       }
+
       .resize-handle {
         fill: black;
         stroke: white;
         stroke-width: 2px;
       }
+
       .line-handle {
-        fill: #2563eb; /* blue-600 */
+        fill: #2563eb;
+        /* blue-600 */
         stroke: white;
         stroke-width: 2px;
         cursor: move;
       }
-      .cursor-nwse-resize { cursor: nwse-resize; }
-      .cursor-nesw-resize { cursor: nesw-resize; }
-      .cursor-ns-resize { cursor: ns-resize; }
-      .cursor-ew-resize { cursor: ew-resize; }
-      
+
+      .cursor-nwse-resize {
+        cursor: nwse-resize;
+      }
+
+      .cursor-nesw-resize {
+        cursor: nesw-resize;
+      }
+
+      .cursor-ns-resize {
+        cursor: ns-resize;
+      }
+
+      .cursor-ew-resize {
+        cursor: ew-resize;
+      }
+
       /* Custom scrollbar for horizontal scrolling */
       .scrollbar-thin::-webkit-scrollbar {
         height: 6px;
       }
+
       .scrollbar-thin::-webkit-scrollbar-track {
         background: #f1f5f9;
         border-radius: 3px;
       }
+
       .scrollbar-thin::-webkit-scrollbar-thumb {
         background: #cbd5e1;
         border-radius: 3px;
       }
+
       .scrollbar-thin::-webkit-scrollbar-thumb:hover {
         background: #94a3b8;
       }
+
       .scrollbar-thumb-gray-300::-webkit-scrollbar-thumb {
         background: #d1d5db;
       }
+
       .scrollbar-track-gray-100::-webkit-scrollbar-track {
         background: #f3f4f6;
       }
-      
+
       /* Line drawing feedback */
       .line-drawing-mode {
         background: rgba(59, 130, 246, 0.1) !important;
       }
+
       .line-start-point {
         fill: #3b82f6;
         stroke: white;
         stroke-width: 3px;
       }
     </style>
-<link rel="stylesheet" href="/index.css">
+    <link rel="stylesheet" href="/index.css">
 
-<!-- Structured Data (JSON-LD) -->
-<script type="application/ld+json">
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "WebApplication",
@@ -172,7 +199,7 @@
   "featureList": [
     "エコマップ作成",
     "家族関係図作成",
-    "ネットワーク図作成", 
+    "ネットワーク図作成",
             "JSON形式エクスポート",
     "PNG形式エクスポート",
     "多言語対応",
@@ -199,8 +226,8 @@
 }
 </script>
 
-<!-- Additional structured data for SoftwareApplication -->
-<script type="application/ld+json">
+    <!-- Additional structured data for SoftwareApplication -->
+    <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
@@ -219,8 +246,8 @@
 }
 </script>
 
-<!-- FAQ Structured Data -->
-<script type="application/ld+json">
+    <!-- FAQ Structured Data -->
+    <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "FAQPage",
@@ -234,7 +261,7 @@
       }
     },
     {
-      "@type": "Question", 
+      "@type": "Question",
       "name": "Easy Ecomapは無料で使えますか？",
       "acceptedAnswer": {
         "@type": "Answer",
@@ -252,8 +279,9 @@
   ]
 }
 </script>
-</head>
-<body class="bg-white">
+  </head>
+
+  <body class="bg-white">
     <div id="root"></div>
 
     <script type="text/javascript">
@@ -291,7 +319,7 @@
         [EcoLineType.Stressful]: 2,
       };
       const GRID_SIZE = 20;
-      
+
       // オフホワイトの色を定義
       const OFF_WHITE_COLOR = '#f5f5f5';
 
@@ -388,16 +416,16 @@
 
       // --- ICONS ---
       const e = React.createElement;
-      const SelectIcon = () => e('svg',{xmlns:'http://www.w3.org/2000/svg',width:24,height:24,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},e('path',{d:'M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z'}),e('path',{d:'M13 13l6 6'}));
-      const TextIcon = () => e('svg',{xmlns:"http://www.w3.org/2000/svg", width:24, height:24, viewBox:"0 0 24 24", fill:"none", stroke:"currentColor", strokeWidth:2, strokeLinecap:"round", strokeLinejoin:"round"}, e('path', {d:"M7 20l5-16 5 16"}), e('path', {d:"M8 14h8"}));
-      const ItemIcon = () => e('svg',{width:24,height:24,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'}, e('rect', {x:3, y:8, width:18, height:8, rx:2}));
-      const EraserIcon = () => e('svg',{xmlns:"http://www.w3.org/2000/svg",width:24,height:24,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2,strokeLinecap:"round",strokeLinejoin:"round"},e('path',{d:"m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"}),e('path',{d:"M22 21H7"}),e('path',{d:"m5 12 5 5"}));
-      const StrongLineIcon = () => e('svg',{width:24,height:24,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor'},e('line',{x1:2,y1:12,x2:22,y2:12,strokeWidth:4}));
-      const NormalLineIcon = () => e('svg',{width:24,height:24,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor'},e('line',{x1:2,y1:12,x2:22,y2:12,strokeWidth:2}));
-      const WeakLineIcon = () => e('svg',{width:24,height:24,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor'},e('line',{x1:2,y1:12,x2:22,y2:12,strokeWidth:2,strokeDasharray:'4 4'}));
-      const StressfulLineIcon = () => e('svg',{width:24,height:24,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},e('path',{d:'M2 12l4 4l4-8l4 8l4-4l4 4'}));
-      const UndoIcon = () => e('svg',{xmlns:"http://www.w3.org/2000/svg",width:20,height:20,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2,strokeLinecap:"round",strokeLinejoin:"round"},e('path',{d:"M3 7v6h6"}),e('path',{d:"M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"}));
-      const RedoIcon = () => e('svg',{xmlns:"http://www.w3.org/2000/svg",width:20,height:20,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2,strokeLinecap:"round",strokeLinejoin:"round"},e('path',{d:"M21 7v6h-6"}),e('path',{d:"M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3L21 13"}));
+      const SelectIcon = ({ className = '' }) => e('svg', { className, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' }, e('path', { d: 'M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z' }), e('path', { d: 'M13 13l6 6' }));
+      const TextIcon = ({ className = '' }) => e('svg', { className, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, e('path', { d: "M7 20l5-16 5 16" }), e('path', { d: "M8 14h8" }));
+      const ItemIcon = ({ className = '' }) => e('svg', { className, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' }, e('rect', { x: 3, y: 8, width: 18, height: 8, rx: 2 }));
+      const EraserIcon = ({ className = '' }) => e('svg', { className, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, e('path', { d: "m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21" }), e('path', { d: "M22 21H7" }), e('path', { d: "m5 12 5 5" }));
+      const StrongLineIcon = ({ className = '' }) => e('svg', { className, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor' }, e('line', { x1: 2, y1: 12, x2: 22, y2: 12, strokeWidth: 4 }));
+      const NormalLineIcon = ({ className = '' }) => e('svg', { className, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor' }, e('line', { x1: 2, y1: 12, x2: 22, y2: 12, strokeWidth: 2 }));
+      const WeakLineIcon = ({ className = '' }) => e('svg', { className, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor' }, e('line', { x1: 2, y1: 12, x2: 22, y2: 12, strokeWidth: 2, strokeDasharray: '4 4' }));
+      const StressfulLineIcon = ({ className = '' }) => e('svg', { className, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' }, e('path', { d: 'M2 12l4 4l4-8l4 8l4-4l4 4' }));
+      const UndoIcon = ({ className = '' }) => e('svg', { className, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, e('path', { d: "M3 7v6h6" }), e('path', { d: "M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13" }));
+      const RedoIcon = ({ className = '' }) => e('svg', { className, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, e('path', { d: "M21 7v6h-6" }), e('path', { d: "M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3L21 13" }));
 
 
       // --- COMPONENTS ---
@@ -406,105 +434,95 @@
         const strokeColor = 'black';
         const strokeWidth = isSelected ? 3 : 2;
         const shapeTextareaRef = useRef(null);
-        
+
         let cursorClass = 'cursor-pointer';
         if (Object.values(EcoLineType).includes(activeTool)) {
-            cursorClass = 'cursor-crosshair';
+          cursorClass = 'cursor-crosshair';
         }
 
         useEffect(() => {
-            if (isEditing && shapeTextareaRef.current) {
-                shapeTextareaRef.current.focus();
-                shapeTextareaRef.current.select();
-            }
+          if (isEditing && shapeTextareaRef.current) {
+            shapeTextareaRef.current.focus();
+            shapeTextareaRef.current.select();
+          }
         }, [isEditing]);
 
         const handleTextareaKeyDown = (evt) => {
-            if (evt.key === 'Enter' && !evt.shiftKey && !evt.altKey && !evt.metaKey) {
-                evt.preventDefault();
-                onTextChange(id, evt.target.value, true);
-            }
+          if (evt.key === 'Enter' && !evt.shiftKey && !evt.altKey && !evt.metaKey) {
+            evt.preventDefault();
+            onTextChange(id, evt.target.value, true);
+          }
         };
 
         const textStyle = {
-            fontFamily: 'inherit',
-            fontSize: `${fontSize || FONT_SIZES.medium}px`,
-            fontWeight: 'bold',
-            textAlign: 'center',
-            color: 'black',
-            background: 'none',
-            border: 'none',
-            outline: 'none',
-            resize: 'none',
-            width: '100%',
-            height: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '4px',
-            margin: '0',
-            boxSizing: 'border-box',
-            whiteSpace: 'pre-wrap',
-            wordBreak: 'break-word',
+          fontFamily: 'inherit',
+          fontSize: `${fontSize || FONT_SIZES.medium}px`,
+          fontWeight: 'bold',
+          textAlign: 'center',
+          color: 'black',
+          background: 'none',
+          border: 'none',
+          outline: 'none',
+          resize: 'none',
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '4px',
+          margin: '0',
+          boxSizing: 'border-box',
+          whiteSpace: 'pre-wrap',
+          wordBreak: 'break-word',
         };
 
         return e('g', {
-            transform: `translate(${x}, ${y})`,
-            className: cursorClass,
-            onDoubleClick: () => !isEditing && onDoubleClick(id),
-          },
+          transform: `translate(${x}, ${y})`,
+          className: cursorClass,
+          onDoubleClick: () => !isEditing && onDoubleClick(id),
+        },
           e('rect', {
             width, height, rx: 15, ry: 15,
             fill: OFF_WHITE_COLOR, stroke: strokeColor, strokeWidth
           }),
           isEditing ?
             e('foreignObject', { x: 0, y: 0, width: width, height: height },
-                e('textarea', {
-                    ref: shapeTextareaRef,
-                    value: text,
-                    onChange: (evt) => onTextChange(id, evt.target.value),
-                    onBlur: (evt) => onTextChange(id, evt.target.value, true),
-                    onKeyDown: handleTextareaKeyDown,
-                    style: textStyle
-                })
+              e('textarea', {
+                ref: shapeTextareaRef,
+                value: text,
+                onChange: (evt) => onTextChange(id, evt.target.value),
+                onBlur: (evt) => onTextChange(id, evt.target.value, true),
+                onKeyDown: handleTextareaKeyDown,
+                style: textStyle
+              })
             )
-            : 
+            :
             e('foreignObject', { x: 0, y: 0, width, height, className: 'select-none' },
-                e('div', { style: textStyle }, text)
+              e('div', { style: textStyle }, text)
             )
         );
       };
 
       const Palette = ({ activeTool, setActiveTool, fontSize, setFontSize }) => {
         const { t } = useLanguage();
-        
-        const createToolButton = (tool, isActive) => e('button', {
-          onClick: () => setActiveTool(tool.id),
-          className: `min-w-[3rem] h-9 px-3 rounded-lg transition-colors flex flex-col items-center justify-center gap-0.5 ${isActive ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'} `,
-          title: tool.label
-        }, 
-          e('div', { className: 'w-4 h-4 flex items-center justify-center' }, tool.icon),
-          e('span', { className: 'text-xs font-medium truncate' }, tool.shortLabel || tool.label)
+
+        const ToolButton = ({ label, caption, tool, activeTool, onSelect, children }) => e('button', {
+          onClick: () => onSelect(tool),
+          className: `flex flex-col items-center justify-center min-w-[3.5rem] h-12 px-3 rounded-lg gap-1 transition-all duration-200 border ${activeTool === tool
+            ? 'bg-blue-500 text-white border-blue-500 shadow-lg transform scale-105'
+            : 'bg-white text-gray-600 hover:bg-gray-50 border-gray-200 hover:border-gray-300 hover:shadow-md'
+            }`,
+          title: label
+        },
+          children,
+          e('span', { className: 'text-xs font-medium truncate' }, caption)
         );
 
-        const createFontButton = (name, size, isActive) => {
-          const fontLabel = t(`font${name.charAt(0).toUpperCase() + name.slice(1)}`);
-          const shortFontLabel = fontLabel[0];
-          return e('button', {
-            onClick: () => setFontSize(size),
-            className: `min-w-[2.5rem] h-9 px-2 rounded-lg transition-colors flex flex-col items-center justify-center gap-0.5 ${isActive ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'} `,
-            title: fontLabel
-          },
-            e('span', { className: 'text-sm font-bold leading-none' }, shortFontLabel),
-            e('span', { className: 'text-xs leading-none' }, '文字')
-          );
-        };
-        
         const getShortLabel = (key, fallback) => {
           const shortLabels = {
             ja: {
               select: '選択',
-              text: 'テキスト', 
+              text: 'テキスト',
               addItem: '項目',
               eraser: '消去',
               strongConnection: '強い',
@@ -515,7 +533,7 @@
             en: {
               select: 'Select',
               text: 'Text',
-              addItem: 'Item', 
+              addItem: 'Item',
               eraser: 'Erase',
               strongConnection: 'Strong',
               normalConnection: 'Normal',
@@ -537,193 +555,297 @@
           { id: EcoLineType.Stressful, icon: e(StressfulLineIcon), label: t('stressfulConnection'), shortLabel: getShortLabel('stressfulConnection', t('stressfulConnection')) }
         ];
 
-        return e('div', { className: 'absolute top-16 left-0 right-0 bg-white shadow-lg border-b border-gray-200 z-10' },
-          e('div', { className: 'flex items-center gap-2 px-4 py-2 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100' },
-            ...allTools.map(tool => createToolButton(tool, activeTool === tool.id)),
-            e('div', { className: 'w-px h-6 bg-gray-300 mx-2 flex-shrink-0' }),
-            ...Object.entries(FONT_SIZES).map(([name, size]) => createFontButton(name, size, fontSize === size))
-          )
-        );
-      };
-
-              const Header = ({ onSave, onLoadJSON, onUndo, onRedo, canUndo, canRedo, showGrid, setShowGrid }) => {
-        const { t, language, setLanguage } = useLanguage();
-        const fileInputRef = useRef(null);
-
-        const createButton = (labelOrIcon, onClick, disabled = false, title = '', isActive = false, isCompact = false) => e('button', {
-            onClick, disabled, title,
-            className: `${isCompact ? 'px-2 py-2 min-w-[2.5rem]' : 'px-3 py-2 min-w-[3rem]'} text-sm font-medium rounded-md shadow-sm border hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap ${isActive ? 'bg-blue-100 text-blue-800 border-blue-500' : 'bg-white text-gray-700 border-gray-300'} `
-          }, labelOrIcon);
-
-        return e('header', { className: 'absolute top-0 left-0 right-0 h-16 bg-white shadow-md flex items-center justify-between px-3 z-20 border-b border-gray-200' },
-          e('h1', { className: 'text-lg font-bold text-gray-800 whitespace-nowrap flex-shrink-0 mr-4' }, t('headerTitle')),
-          e('div', { className: 'flex items-center gap-2 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 pb-1' },
-            e('div', { className: 'flex items-center gap-1 flex-shrink-0' },
-              createButton(t('save'), onSave, false, t('save'), false, true),
-                              createButton(t('loadJSON'), () => fileInputRef.current?.click(), false, t('loadJSON'), false, true),
-                              e('input', { type: 'file', ref: fileInputRef, onChange: onLoadJSON, accept: '.json', className: 'hidden' })
+        return e('div', { className: 'bg-gradient-to-r from-gray-50 to-white border-b border-gray-200 shadow-sm px-4 py-3 overflow-x-auto' },
+          e('div', { className: 'flex items-center gap-6 flex-nowrap' },
+            // 基本ツール
+            e('div', { className: 'flex items-center gap-2' },
+              e('div', { className: 'text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1' }, '基本ツール'),
+              e('div', { className: 'flex items-center gap-1' },
+                e(ToolButton, {
+                  label: t('select'),
+                  caption: getShortLabel('select', t('select')),
+                  tool: 'select',
+                  activeTool,
+                  onSelect: setActiveTool
+                }, e(SelectIcon, { className: 'w-4 h-4' })),
+                e(ToolButton, {
+                  label: t('text'),
+                  caption: getShortLabel('text', t('text')),
+                  tool: 'text',
+                  activeTool,
+                  onSelect: setActiveTool
+                }, e(TextIcon, { className: 'w-4 h-4' })),
+                e(ToolButton, {
+                  label: t('addItem'),
+                  caption: getShortLabel('addItem', t('addItem')),
+                  tool: 'shape',
+                  activeTool,
+                  onSelect: setActiveTool
+                }, e(ItemIcon, { className: 'w-4 h-4' })),
+                e(ToolButton, {
+                  label: t('eraser'),
+                  caption: getShortLabel('eraser', t('eraser')),
+                  tool: 'eraser',
+                  activeTool,
+                  onSelect: setActiveTool
+                }, e(EraserIcon, { className: 'w-4 h-4' }))
+              )
             ),
-            e('div', { className: 'w-px h-6 bg-gray-300 flex-shrink-0' }),
-            e('div', { className: 'flex items-center gap-1 flex-shrink-0' },
-              createButton(e(UndoIcon), onUndo, !canUndo, t('undo'), false, true),
-              createButton(e(RedoIcon), onRedo, !canRedo, t('redo'), false, true)
+            // 関係線
+            e('div', { className: 'flex items-center gap-2' },
+              e('div', { className: 'text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1' }, '関係線'),
+              e('div', { className: 'flex items-center gap-1' },
+                e(ToolButton, {
+                  label: t('strongConnection'),
+                  caption: getShortLabel('strongConnection', t('strongConnection')),
+                  tool: EcoLineType.Strong,
+                  activeTool,
+                  onSelect: setActiveTool
+                }, e(StrongLineIcon, { className: 'w-4 h-4' })),
+                e(ToolButton, {
+                  label: t('normalConnection'),
+                  caption: getShortLabel('normalConnection', t('normalConnection')),
+                  tool: EcoLineType.Normal,
+                  activeTool,
+                  onSelect: setActiveTool
+                }, e(NormalLineIcon, { className: 'w-4 h-4' })),
+                e(ToolButton, {
+                  label: t('weakConnection'),
+                  caption: getShortLabel('weakConnection', t('weakConnection')),
+                  tool: EcoLineType.Weak,
+                  activeTool,
+                  onSelect: setActiveTool
+                }, e(WeakLineIcon, { className: 'w-4 h-4' })),
+                e(ToolButton, {
+                  label: t('stressfulConnection'),
+                  caption: getShortLabel('stressfulConnection', t('stressfulConnection')),
+                  tool: EcoLineType.Stressful,
+                  activeTool,
+                  onSelect: setActiveTool
+                }, e(StressfulLineIcon, { className: 'w-4 h-4' }))
+              )
             ),
-            e('div', { className: 'w-px h-6 bg-gray-300 flex-shrink-0' }),
-            e('label', { className: 'flex items-center gap-2 cursor-pointer px-2 py-2 rounded-md hover:bg-gray-50 flex-shrink-0' },
-              e('input', { type: 'checkbox', checked: showGrid, onChange: (e) => setShowGrid(e.target.checked), className: 'h-4 w-4 text-blue-600 rounded focus:ring-blue-500 border-gray-300' }),
-              e('span', { className: 'text-sm font-medium text-gray-700 whitespace-nowrap' }, t('toggleGrid'))
-            ),
-            e('div', { className: 'w-px h-6 bg-gray-300 flex-shrink-0' }),
-            e('select', {
-                value: language, onChange: (e) => setLanguage(e.target.value),
-                className: "px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex-shrink-0"
-              },
-              Object.keys(locales).map(lang => e('option', { key: lang, value: lang }, locales[lang].name))
+            // セパレーター
+            e('div', { className: 'w-px h-8 bg-gray-300' }),
+            // 設定
+            e('div', { className: 'flex items-center gap-4' },
+              e('div', { className: 'flex items-center gap-2 bg-white rounded-lg px-3 py-2 border border-gray-200 shadow-sm' },
+                e('span', { className: 'text-sm font-medium text-gray-700' }, '字'),
+                e('select', {
+                  value: fontSize,
+                  onChange: (e) => setFontSize(Number(e.target.value)),
+                  className: 'w-16 h-8 px-2 text-sm border border-gray-200 rounded-md bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200'
+                },
+                  Object.entries(FONT_SIZES).map(([name, size]) =>
+                    e('option', { key: name, value: size }, t(`font${name.charAt(0).toUpperCase() + name.slice(1)}`))
+                  )
+                )
+              )
             )
           )
         );
       };
-      
+
+      const Header = ({ onSave, onLoadJSON, onUndo, onRedo, canUndo, canRedo, showGrid, setShowGrid }) => {
+        const { t, language, setLanguage } = useLanguage();
+        const fileInputRef = useRef(null);
+
+        const Button = ({ onClick, children, className = '', disabled = false, title = '' }) => e('button', {
+          onClick, disabled, title,
+          className: `px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-400 whitespace-nowrap transition-all duration-200 shadow-sm hover:shadow-md ${className}`
+        }, children);
+
+        const IconButton = ({ onClick, children, disabled = false, title = '', active = false }) => e('button', {
+          onClick, disabled, title,
+          className: `p-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ${active
+            ? 'bg-blue-50 text-blue-600 border-blue-300 shadow-sm'
+            : 'bg-white text-gray-600 hover:bg-gray-50 hover:border-gray-300 shadow-sm hover:shadow-md'
+            }`
+        }, children);
+
+        return e('header', { className: 'bg-gradient-to-r from-gray-50 to-white border-b border-gray-200 shadow-lg z-20 w-full' },
+          e('div', { className: 'max-w-full mx-auto px-4 overflow-x-auto' },
+            e('div', { className: 'flex justify-between items-center h-16 flex-nowrap' },
+              e('div', { className: 'flex items-center gap-4' },
+                e('h1', { className: 'text-xl font-bold text-gray-800 whitespace-nowrap' }, t('headerTitle')),
+                e('a', {
+                  href: '/manual.html',
+                  target: '_blank',
+                  rel: 'noopener noreferrer',
+                  className: 'text-sm text-blue-600 hover:text-blue-800 hover:underline font-medium'
+                }, '📖 マニュアル')
+              ),
+              e('div', { className: 'flex items-center gap-3 flex-nowrap' },
+                e(Button, { onClick: onSave }, t('save')),
+                e(Button, { onClick: () => fileInputRef.current?.click() }, t('loadJSON')),
+                e('input', { type: 'file', ref: fileInputRef, onChange: onLoadJSON, accept: '.json', className: 'hidden' }),
+                e('div', { className: 'flex items-center gap-1' },
+                  e(IconButton, { onClick: onUndo, disabled: !canUndo, title: t('undo') }, e(UndoIcon, { className: 'w-4 h-4' })),
+                  e(IconButton, { onClick: onRedo, disabled: !canRedo, title: t('redo') }, e(RedoIcon, { className: 'w-4 h-4' }))
+                ),
+                e('div', { className: 'flex items-center whitespace-nowrap ml-2 bg-white rounded-lg px-3 py-2 border border-gray-200 shadow-sm' },
+                  e('input', {
+                    type: 'checkbox',
+                    id: 'grid-toggle',
+                    checked: showGrid,
+                    onChange: (e) => setShowGrid(e.target.checked),
+                    className: 'mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500'
+                  }),
+                  e('label', { htmlFor: 'grid-toggle', className: 'text-sm text-gray-700 whitespace-nowrap font-medium' }, t('toggleGrid'))
+                ),
+                e('select', {
+                  value: language,
+                  onChange: (e) => setLanguage(e.target.value),
+                  className: 'px-3 py-2 border border-gray-200 rounded-lg bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent whitespace-nowrap shadow-sm hover:shadow-md transition-all duration-200'
+                },
+                  Object.keys(locales).map(lang => e('option', { key: lang, value: lang }, locales[lang].name))
+                )
+              )
+            )
+          )
+        );
+      };
+
       const Canvas = ({ canvasState, onMouseDown, onMouseMove, onMouseUp, onMouseLeave, onDoubleClickShape, onDoubleClickText, editingTextId, onTextChange, editingShapeId, onShapeTextChange, selectedElementIds, drawingLine, selectionBox, showGrid, svgRef, activeTool, shapePreview }) => {
         const { shapes, lines, texts, width, height } = canvasState;
         const textareaRef = useRef(null);
-        
+
         useEffect(() => {
-            if (editingTextId && textareaRef.current) {
-                textareaRef.current.focus();
-                textareaRef.current.select();
-            }
+          if (editingTextId && textareaRef.current) {
+            textareaRef.current.focus();
+            textareaRef.current.select();
+          }
         }, [editingTextId]);
-        
+
         let cursorClass = 'cursor-default';
         if (drawingLine || Object.values(EcoLineType).includes(activeTool) || activeTool === 'shape' || activeTool === 'text') {
-            cursorClass = 'cursor-crosshair';
+          cursorClass = 'cursor-crosshair';
         } else if (activeTool === 'eraser') {
-            cursorClass = 'cursor-pointer';
+          cursorClass = 'cursor-pointer';
         }
 
         const generateZigzagPath = (start, end) => {
-            const dx = end.x - start.x, dy = end.y - start.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            const segments = Math.max(2, Math.floor(distance / 15));
-            const amplitude = 8;
-            let path = `M ${start.x} ${start.y} `;
-            for (let i = 1; i < segments; i++) {
-                const t = i / segments;
-                const x = start.x + dx * t;
-                const y = start.y + dy * t;
-                const perpDx = -dy / distance, perpDy = dx / distance;
-                const offsetX = perpDx * amplitude * (i % 2 === 0 ? 1 : -1);
-                const offsetY = perpDy * amplitude * (i % 2 === 0 ? 1 : -1);
-                path += `L ${x + offsetX} ${y + offsetY} `;
-            }
-            path += `L ${end.x} ${end.y}`;
-            return path;
+          const dx = end.x - start.x, dy = end.y - start.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          const segments = Math.max(2, Math.floor(distance / 15));
+          const amplitude = 8;
+          let path = `M ${start.x} ${start.y} `;
+          for (let i = 1; i < segments; i++) {
+            const t = i / segments;
+            const x = start.x + dx * t;
+            const y = start.y + dy * t;
+            const perpDx = -dy / distance, perpDy = dx / distance;
+            const offsetX = perpDx * amplitude * (i % 2 === 0 ? 1 : -1);
+            const offsetY = perpDy * amplitude * (i % 2 === 0 ? 1 : -1);
+            path += `L ${x + offsetX} ${y + offsetY} `;
+          }
+          path += `L ${end.x} ${end.y}`;
+          return path;
         };
 
         const getResizeHandles = (element) => {
-            if (!element) return [];
-            const { x, y, width, height } = element;
-            const handleSize = 8;
-            const h2 = handleSize / 2;
+          if (!element) return [];
+          const { x, y, width, height } = element;
+          const handleSize = 8;
+          const h2 = handleSize / 2;
 
-            return [
-              { id: 'top-left', x: x - h2, y: y - h2, cursor: 'cursor-nwse-resize' },
-              { id: 'top', x: x + width/2 - h2, y: y - h2, cursor: 'cursor-ns-resize' },
-              { id: 'top-right', x: x + width - h2, y: y - h2, cursor: 'cursor-nesw-resize' },
-              { id: 'left', x: x - h2, y: y + height/2 - h2, cursor: 'cursor-ew-resize' },
-              { id: 'right', x: x + width - h2, y: y + height/2 - h2, cursor: 'cursor-ew-resize' },
-              { id: 'bottom-left', x: x - h2, y: y + height - h2, cursor: 'cursor-nwse-resize' },
-              { id: 'bottom', x: x + width/2 - h2, y: y + height - h2, cursor: 'cursor-ns-resize' },
-              { id: 'bottom-right', x: x + width - h2, y: y + height - h2, cursor: 'cursor-nwse-resize' },
-            ];
+          return [
+            { id: 'top-left', x: x - h2, y: y - h2, cursor: 'cursor-nwse-resize' },
+            { id: 'top', x: x + width / 2 - h2, y: y - h2, cursor: 'cursor-ns-resize' },
+            { id: 'top-right', x: x + width - h2, y: y - h2, cursor: 'cursor-nesw-resize' },
+            { id: 'left', x: x - h2, y: y + height / 2 - h2, cursor: 'cursor-ew-resize' },
+            { id: 'right', x: x + width - h2, y: y + height / 2 - h2, cursor: 'cursor-ew-resize' },
+            { id: 'bottom-left', x: x - h2, y: y + height - h2, cursor: 'cursor-nwse-resize' },
+            { id: 'bottom', x: x + width / 2 - h2, y: y + height - h2, cursor: 'cursor-ns-resize' },
+            { id: 'bottom-right', x: x + width - h2, y: y + height - h2, cursor: 'cursor-nwse-resize' },
+          ];
         };
-        
+
         const singleSelectedElement = selectedElementIds.length === 1 ? [...shapes, ...texts].find(s => s.id === selectedElementIds[0]) : null;
         const singleSelectedLine = selectedElementIds.length === 1 ? lines.find(l => l.id === selectedElementIds[0]) : null;
 
-        return e('svg', { ref: svgRef, className: `w-full h-full ${cursorClass}` , width, height, onMouseDown, onMouseMove, onMouseUp, onMouseLeave },
-            e('defs', null,
-                showGrid && e('pattern', { id: 'grid', width: GRID_SIZE, height: GRID_SIZE, patternUnits: 'userSpaceOnUse' },
-                    e('path', { d: `M ${GRID_SIZE} 0 L 0 0 0 ${GRID_SIZE}` , fill: 'none', stroke: 'rgba(0, 0, 0, 0.15)', strokeWidth: '1' })
-                )
-            ),
-            e('rect', { width: '100%', height: '100%', fill: showGrid ? 'url(#grid)' : OFF_WHITE_COLOR }),
-            shapePreview && e('rect', {
-                x: shapePreview.x, y: shapePreview.y, width: shapePreview.width, height: shapePreview.height,
-                rx: 15, ry: 15,
-                fill: OFF_WHITE_COLOR, stroke: 'rgba(0,0,0,0.4)', strokeWidth: 2, strokeDasharray: '5,5'
-            }),
-            // 完成した線を描画（選択状態の太さ変更あり）
-            lines.map(line => {
-                const isSelected = selectedElementIds.includes(line.id);
-                const strokeWidth = LINE_STROKES[line.type] + (isSelected ? 2 : 0);
-                const strokeColor = 'black';
-                let lineCursorClass = activeTool === 'eraser' ? 'cursor-pointer' : '';
-                if (Object.values(EcoLineType).includes(activeTool)) {
-                    lineCursorClass = 'cursor-crosshair';
-                }
+        return e('svg', { ref: svgRef, className: `w-full h-full ${cursorClass}`, width, height, onMouseDown, onMouseMove, onMouseUp, onMouseLeave },
+          e('defs', null,
+            showGrid && e('pattern', { id: 'grid', width: GRID_SIZE, height: GRID_SIZE, patternUnits: 'userSpaceOnUse' },
+              e('path', { d: `M ${GRID_SIZE} 0 L 0 0 0 ${GRID_SIZE}`, fill: 'none', stroke: 'rgba(0, 0, 0, 0.15)', strokeWidth: '1' })
+            )
+          ),
+          e('rect', { width: '100%', height: '100%', fill: showGrid ? 'url(#grid)' : OFF_WHITE_COLOR }),
+          shapePreview && e('rect', {
+            x: shapePreview.x, y: shapePreview.y, width: shapePreview.width, height: shapePreview.height,
+            rx: 15, ry: 15,
+            fill: OFF_WHITE_COLOR, stroke: 'rgba(0,0,0,0.4)', strokeWidth: 2, strokeDasharray: '5,5'
+          }),
+          // 完成した線を描画（選択状態の太さ変更あり）
+          lines.map(line => {
+            const isSelected = selectedElementIds.includes(line.id);
+            const strokeWidth = LINE_STROKES[line.type] + (isSelected ? 2 : 0);
+            const strokeColor = 'black';
+            let lineCursorClass = activeTool === 'eraser' ? 'cursor-pointer' : '';
+            if (Object.values(EcoLineType).includes(activeTool)) {
+              lineCursorClass = 'cursor-crosshair';
+            }
 
-                if (line.type === EcoLineType.Stressful) {
-                    return e('path', { key: line.id, d: generateZigzagPath(line.start, line.end), stroke: strokeColor, strokeWidth, fill: 'none', className: lineCursorClass });
-                }
-                return e('line', { key: line.id, x1: line.start.x, y1: line.start.y, x2: line.end.x, y2: line.end.y, stroke: strokeColor, strokeWidth, strokeDasharray: line.type === EcoLineType.Weak ? '5,5' : 'none', className: lineCursorClass });
-            }),
-            // 描画中の線を描画（選択状態の太さ変更なし）
-            drawingLine && (() => {
-                const strokeWidth = LINE_STROKES[drawingLine.type];
-                const strokeColor = 'black';
-                
-                if (drawingLine.type === EcoLineType.Stressful) {
-                    return e('path', { key: 'drawing-line', d: generateZigzagPath(drawingLine.start, drawingLine.end), stroke: strokeColor, strokeWidth, fill: 'none' });
-                }
-                return e('line', { key: 'drawing-line', x1: drawingLine.start.x, y1: drawingLine.start.y, x2: drawingLine.end.x, y2: drawingLine.end.y, stroke: strokeColor, strokeWidth, strokeDasharray: drawingLine.type === EcoLineType.Weak ? '5,5' : 'none' });
-            })(),
-            shapes.map(shape => e(ShapeComponent, { key: shape.id, shape, isSelected: selectedElementIds.includes(shape.id), onDoubleClick: onDoubleClickShape, isEditing: editingShapeId === shape.id, onTextChange: onShapeTextChange, activeTool })),
-            texts.map(text => {
-                const isSelected = selectedElementIds.includes(text.id);
-                const isEditing = editingTextId === text.id;
-                let elementCursorClass = 'cursor-pointer';
-                if (activeTool === 'eraser') {
-                    elementCursorClass = 'cursor-pointer';
-                } else if (Object.values(EcoLineType).includes(activeTool)) {
-                    elementCursorClass = 'cursor-crosshair';
-                }
+            if (line.type === EcoLineType.Stressful) {
+              return e('path', { key: line.id, d: generateZigzagPath(line.start, line.end), stroke: strokeColor, strokeWidth, fill: 'none', className: lineCursorClass });
+            }
+            return e('line', { key: line.id, x1: line.start.x, y1: line.start.y, x2: line.end.x, y2: line.end.y, stroke: strokeColor, strokeWidth, strokeDasharray: line.type === EcoLineType.Weak ? '5,5' : 'none', className: lineCursorClass });
+          }),
+          // 描画中の線を描画（選択状態の太さ変更なし）
+          drawingLine && (() => {
+            const strokeWidth = LINE_STROKES[drawingLine.type];
+            const strokeColor = 'black';
 
-                return e('g', { key: text.id, transform: `translate(${text.x}, ${text.y})` , className: elementCursorClass },
-                    isEditing ? e('foreignObject', { x: 0, y: 0, width: text.width, height: text.height },
-                        e('textarea', {
-                            ref: textareaRef, value: text.text,
-                            onChange: (e) => onTextChange(text.id, e.target.value),
-                            onBlur: () => onTextChange(text.id, text.text, true),
-                            onKeyDown: (evt) => { if (evt.key === 'Enter' && !evt.shiftKey && !evt.altKey && !evt.metaKey) { evt.preventDefault(); onTextChange(text.id, text.text, true); }},
-                            style: { fontSize: `${text.fontSize}px` },
-                            className: "w-full h-full p-1 border border-blue-500 rounded-md resize-none bg-gray-50 text-black"
-                        })
-                    ) : e('foreignObject', { x: 0, y: 0, width: text.width, height: text.height, onDoubleClick: () => onDoubleClickText(text.id) },
-                        e('div', {
-                            style: { fontSize: `${text.fontSize}px`, border: isSelected ? '2px solid black' : '1px solid transparent', padding: isSelected ? '0px' : '1px' },
-                            className: "w-full h-full p-1 box-border break-words text-black"
-                        }, text.text)
-                    )
-                );
-            }),
-            selectionBox && e('rect', { x: selectionBox.x, y: selectionBox.y, width: selectionBox.width, height: selectionBox.height, fill: 'rgba(59, 130, 246, 0.2)', stroke: 'rgba(59, 130, 246, 0.8)', strokeWidth: '1' }),
-            singleSelectedElement && getResizeHandles(singleSelectedElement).map(handle => e('rect', {
-                key: handle.id, 'data-handle': handle.id, x: handle.x, y: handle.y, width: 8, height: 8,
-                className: `resize-handle ${handle.cursor}`
-            })),
-            singleSelectedLine && [
-                e('circle', { key: 'line-start-handle', 'data-line-handle': 'start', cx: singleSelectedLine.start.x, cy: singleSelectedLine.start.y, r: 6, className: 'line-handle cursor-move' }),
-                e('circle', { key: 'line-end-handle', 'data-line-handle': 'end', cx: singleSelectedLine.end.x, cy: singleSelectedLine.end.y, r: 6, className: 'line-handle cursor-move' })
-            ],
-            drawingLine && e('circle', { cx: drawingLine.start.x, cy: drawingLine.start.y, r: 6, className: 'line-start-point' })
+            if (drawingLine.type === EcoLineType.Stressful) {
+              return e('path', { key: 'drawing-line', d: generateZigzagPath(drawingLine.start, drawingLine.end), stroke: strokeColor, strokeWidth, fill: 'none' });
+            }
+            return e('line', { key: 'drawing-line', x1: drawingLine.start.x, y1: drawingLine.start.y, x2: drawingLine.end.x, y2: drawingLine.end.y, stroke: strokeColor, strokeWidth, strokeDasharray: drawingLine.type === EcoLineType.Weak ? '5,5' : 'none' });
+          })(),
+          shapes.map(shape => e(ShapeComponent, { key: shape.id, shape, isSelected: selectedElementIds.includes(shape.id), onDoubleClick: onDoubleClickShape, isEditing: editingShapeId === shape.id, onTextChange: onShapeTextChange, activeTool })),
+          texts.map(text => {
+            const isSelected = selectedElementIds.includes(text.id);
+            const isEditing = editingTextId === text.id;
+            let elementCursorClass = 'cursor-pointer';
+            if (activeTool === 'eraser') {
+              elementCursorClass = 'cursor-pointer';
+            } else if (Object.values(EcoLineType).includes(activeTool)) {
+              elementCursorClass = 'cursor-crosshair';
+            }
+
+            return e('g', { key: text.id, transform: `translate(${text.x}, ${text.y})`, className: elementCursorClass },
+              isEditing ? e('foreignObject', { x: 0, y: 0, width: text.width, height: text.height },
+                e('textarea', {
+                  ref: textareaRef, value: text.text,
+                  onChange: (e) => onTextChange(text.id, e.target.value),
+                  onBlur: () => onTextChange(text.id, text.text, true),
+                  onKeyDown: (evt) => { if (evt.key === 'Enter' && !evt.shiftKey && !evt.altKey && !evt.metaKey) { evt.preventDefault(); onTextChange(text.id, text.text, true); } },
+                  style: { fontSize: `${text.fontSize}px` },
+                  className: "w-full h-full p-1 border border-blue-500 rounded-md resize-none bg-gray-50 text-black"
+                })
+              ) : e('foreignObject', { x: 0, y: 0, width: text.width, height: text.height, onDoubleClick: () => onDoubleClickText(text.id) },
+                e('div', {
+                  style: { fontSize: `${text.fontSize}px`, border: isSelected ? '2px solid black' : '1px solid transparent', padding: isSelected ? '0px' : '1px' },
+                  className: "w-full h-full p-1 box-border break-words text-black"
+                }, text.text)
+              )
+            );
+          }),
+          selectionBox && e('rect', { x: selectionBox.x, y: selectionBox.y, width: selectionBox.width, height: selectionBox.height, fill: 'rgba(59, 130, 246, 0.2)', stroke: 'rgba(59, 130, 246, 0.8)', strokeWidth: '1' }),
+          singleSelectedElement && getResizeHandles(singleSelectedElement).map(handle => e('rect', {
+            key: handle.id, 'data-handle': handle.id, x: handle.x, y: handle.y, width: 8, height: 8,
+            className: `resize-handle ${handle.cursor}`
+          })),
+          singleSelectedLine && [
+            e('circle', { key: 'line-start-handle', 'data-line-handle': 'start', cx: singleSelectedLine.start.x, cy: singleSelectedLine.start.y, r: 6, className: 'line-handle cursor-move' }),
+            e('circle', { key: 'line-end-handle', 'data-line-handle': 'end', cx: singleSelectedLine.end.x, cy: singleSelectedLine.end.y, r: 6, className: 'line-handle cursor-move' })
+          ],
+          drawingLine && e('circle', { cx: drawingLine.start.x, cy: drawingLine.start.y, r: 6, className: 'line-start-point' })
         );
       };
 
       const ToolHint = ({ activeTool, drawingLine, t }) => {
         const { language } = useLanguage();
-        
+
         const getToolHint = (tool, isDrawing) => {
           const hints = {
             ja: {
@@ -757,22 +879,30 @@
 
       const Footer = () => {
         const { t, language } = useLanguage();
-        return e('footer', { className: 'absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 py-2 px-4 z-5' },
-          e('div', { className: 'flex flex-col sm:flex-row justify-between items-center text-xs text-gray-500' },
-            e('div', { className: 'mb-1 sm:mb-0' },
-              '© 2025 Easy Ecomap by mochizuki masao. All rights reserved.'
-            ),
-            e('div', { className: 'flex gap-4' },
-              e('a', { 
-                href: `/privacy.html${language === 'en' ? '?lang=en' : ''}`, 
-                target: '_blank',
-                className: 'hover:text-gray-700 underline'
-              }, language === 'ja' ? 'プライバシーポリシー' : 'Privacy Policy'),
-              e('a', { 
-                href: `/terms.html${language === 'en' ? '?lang=en' : ''}`, 
-                target: '_blank',
-                className: 'hover:text-gray-700 underline'
-              }, language === 'ja' ? '利用規約' : 'Terms of Service')
+        return e('footer', { className: 'bg-white border-t border-gray-200 p-4 mx-4 mb-4 rounded-t-xl shadow-lg' },
+          e('div', { className: 'max-w-7xl mx-auto' },
+            e('div', { className: 'flex justify-between items-center text-sm text-gray-500' },
+              e('span', null, '© 2025 Easy Ecomap by mochizuki masao. All rights reserved.'),
+              e('div', { className: 'flex space-x-6' },
+                e('a', {
+                  href: `/privacy.html${language === 'en' ? '?lang=en' : ''}`,
+                  target: '_blank',
+                  rel: 'noopener noreferrer',
+                  className: 'text-gray-500 hover:text-gray-700 hover:underline transition-colors'
+                }, language === 'ja' ? 'プライバシーポリシー' : 'Privacy Policy'),
+                e('a', {
+                  href: `/terms.html${language === 'en' ? '?lang=en' : ''}`,
+                  target: '_blank',
+                  rel: 'noopener noreferrer',
+                  className: 'text-gray-500 hover:text-gray-700 hover:underline transition-colors'
+                }, language === 'ja' ? '利用規約' : 'Terms of Service'),
+                e('a', {
+                  href: `/faq.html${language === 'en' ? '?lang=en' : ''}`,
+                  target: '_blank',
+                  rel: 'noopener noreferrer',
+                  className: 'text-gray-500 hover:text-gray-700 hover:underline transition-colors'
+                }, language === 'ja' ? 'よくある質問' : 'FAQ')
+              )
             )
           )
         );
@@ -794,7 +924,7 @@
         if (!isOpen) return null;
 
         return e('div', { className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50' },
-          e('div', { className: 'bg-white rounded-lg shadow-xl p-6 w-96 max-w-[90vw]' },
+          e('div', { className: 'bg-white rounded-xl shadow-2xl p-6 w-96 max-w-[90vw] border border-gray-200' },
             e('h2', { className: 'text-lg font-semibold text-gray-900 mb-4' }, t('saveDialogTitle')),
             e('div', { className: 'space-y-4' },
               e('div', null,
@@ -841,11 +971,11 @@
               e('div', { className: 'flex justify-end gap-3 pt-4' },
                 e('button', {
                   onClick: onClose,
-                  className: 'px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500'
+                  className: 'px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md'
                 }, t('cancel')),
                 e('button', {
                   onClick: handleSave,
-                  className: 'px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
+                  className: 'px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-lg hover:bg-blue-700 hover:border-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md'
                 }, t('save'))
               )
             )
@@ -879,22 +1009,22 @@
         const selectedElementsStartPosRef = useRef([]);
 
         const getSVGPoint = useCallback((clientX, clientY) => {
-            if (!svgRef.current) return { x: 0, y: 0 };
-            
-            const pt = svgRef.current.createSVGPoint();
-            pt.x = clientX;
-            pt.y = clientY;
-            const ctm = svgRef.current.getScreenCTM();
-            if (ctm) {
-                return pt.matrixTransform(ctm.inverse());
-            }
-            
-            // Fallback if getScreenCTM fails
-            const rect = svgRef.current.getBoundingClientRect();
-            return {
-                x: clientX - rect.left,
-                y: clientY - rect.top
-            };
+          if (!svgRef.current) return { x: 0, y: 0 };
+
+          const pt = svgRef.current.createSVGPoint();
+          pt.x = clientX;
+          pt.y = clientY;
+          const ctm = svgRef.current.getScreenCTM();
+          if (ctm) {
+            return pt.matrixTransform(ctm.inverse());
+          }
+
+          // Fallback if getScreenCTM fails
+          const rect = svgRef.current.getBoundingClientRect();
+          return {
+            x: clientX - rect.left,
+            y: clientY - rect.top
+          };
         }, []);
 
         const createState = useCallback((state, newState) => ({ ...state, ...newState }), []);
@@ -951,10 +1081,10 @@
         }, [canvasState]);
 
         const findShapeAt = useCallback((point) => {
-          return canvasState.shapes.find(shape => 
-            point.x >= shape.x && 
-            point.x <= shape.x + shape.width && 
-            point.y >= shape.y && 
+          return canvasState.shapes.find(shape =>
+            point.x >= shape.x &&
+            point.x <= shape.x + shape.width &&
+            point.y >= shape.y &&
             point.y <= shape.y + shape.height
           );
         }, [canvasState]);
@@ -964,12 +1094,12 @@
           const B = point.y - lineStart.y;
           const C = lineEnd.x - lineStart.x;
           const D = lineEnd.y - lineStart.y;
-          
+
           const dot = A * C + B * D;
           const lenSq = C * C + D * D;
           let param = -1;
           if (lenSq !== 0) param = dot / lenSq;
-          
+
           let xx, yy;
           if (param < 0) {
             xx = lineStart.x;
@@ -981,7 +1111,7 @@
             xx = lineStart.x + param * C;
             yy = lineStart.y + param * D;
           }
-          
+
           const dx = point.x - xx;
           const dy = point.y - yy;
           return Math.sqrt(dx * dx + dy * dy);
@@ -994,7 +1124,7 @@
             const centerX = shape.x + shape.width / 2;
             const centerY = shape.y + shape.height / 2;
             const distance = Math.sqrt((point.x - centerX) ** 2 + (point.y - centerY) ** 2);
-            
+
             if (distance <= threshold) {
               return {
                 point: { x: centerX, y: centerY },
@@ -1010,7 +1140,7 @@
         const addShape = useCallback((position) => {
           const id = createUniqueId();
           const newShape = {
-            id, type: EcoShapeType.Item, x: position.x - SHAPE_SIZES.default.width / 2, y: position.y - SHAPE_SIZES.default.height / 2, 
+            id, type: EcoShapeType.Item, x: position.x - SHAPE_SIZES.default.width / 2, y: position.y - SHAPE_SIZES.default.height / 2,
             width: SHAPE_SIZES.default.width, height: SHAPE_SIZES.default.height, text: t('defaultItemName'), fontSize: FONT_SIZES.medium
           };
           updateHistory(createState(canvasState, { shapes: [...canvasState.shapes, newShape] }));
@@ -1033,7 +1163,7 @@
 
         const deleteElement = useCallback((elementId) => {
           const newShapes = canvasState.shapes.filter(s => s.id !== elementId);
-          const newLines = canvasState.lines.filter(l => 
+          const newLines = canvasState.lines.filter(l =>
             l.id !== elementId && l.startShapeId !== elementId && l.endShapeId !== elementId
           );
           const newTexts = canvasState.texts.filter(t => t.id !== elementId);
@@ -1057,31 +1187,31 @@
             if (lineEditingState && lineEditingState.lineId === line.id) {
               return line;
             }
-            
+
             // Direct line movement
             if (elementIds.includes(line.id)) {
               const startPos = selectedElementsStartPosRef.current.find(e => e.id === line.id)?.startPos;
               if (!startPos) return line;
               const lineWidth = line.end.x - line.start.x;
               const lineHeight = line.end.y - line.start.y;
-              return { 
-                ...line, 
+              return {
+                ...line,
                 start: { x: startPos.x + deltaX, y: startPos.y + deltaY },
                 end: { x: startPos.x + deltaX + lineWidth, y: startPos.y + deltaY + lineHeight }
               };
             }
-            
+
             // Line following connected shapes
             const startShape = newShapes.find(s => s.id === line.startShapeId);
             const endShape = newShapes.find(s => s.id === line.endShapeId);
-            
+
             return {
               ...line,
-              start: startShape ? 
-                { x: startShape.x + startShape.width/2, y: startShape.y + startShape.height/2 } : 
+              start: startShape ?
+                { x: startShape.x + startShape.width / 2, y: startShape.y + startShape.height / 2 } :
                 line.start,
-              end: endShape ? 
-                { x: endShape.x + endShape.width/2, y: endShape.y + endShape.height/2 } : 
+              end: endShape ?
+                { x: endShape.x + endShape.width / 2, y: endShape.y + endShape.height / 2 } :
                 line.end
             };
           });
@@ -1091,7 +1221,7 @@
         const handleMouseDown = useCallback((evt) => {
           evt.preventDefault();
           const point = getSVGPoint(evt.clientX, evt.clientY);
-          
+
           // Check for resize handle click
           const handleId = evt.target.dataset.handle;
           if (handleId && selectedElementIds.length === 1) {
@@ -1110,7 +1240,7 @@
               return;
             }
           }
-          
+
           // Check for line handle click
           const lineHandleType = evt.target.dataset.lineHandle;
           if (lineHandleType && selectedElementIds.length === 1) {
@@ -1123,10 +1253,10 @@
               } else if (lineHandleType === 'end') {
                 tempLine.endShapeId = null;
               }
-              
+
               const newLines = canvasState.lines.map(l => l.id === line.id ? tempLine : l);
               setCanvasState(createState(canvasState, { lines: newLines }));
-              
+
               setLineEditingState({
                 lineId: line.id,
                 handle: lineHandleType,
@@ -1135,7 +1265,7 @@
               return;
             }
           }
-          
+
           if (activeTool === 'select') {
             const elementAtPoint = findElementAt(point);
             if (elementAtPoint) {
@@ -1174,15 +1304,15 @@
 
         const handleMouseMove = useCallback((evt) => {
           const point = getSVGPoint(evt.clientX, evt.clientY);
-          
+
           if (resizingState) {
             // Handle resizing
             const { elementId, handle, startX, startY, startWidth, startHeight, startMouseX, startMouseY } = resizingState;
             const deltaX = point.x - startMouseX;
             const deltaY = point.y - startMouseY;
-            
+
             let newX = startX, newY = startY, newWidth = startWidth, newHeight = startHeight;
-            
+
             if (handle.includes('left')) {
               newX = startX + deltaX;
               newWidth = startWidth - deltaX;
@@ -1197,11 +1327,11 @@
             if (handle.includes('bottom')) {
               newHeight = startHeight + deltaY;
             }
-            
+
             // Apply minimum size constraints
             newWidth = Math.max(newWidth, MIN_SHAPE_SIZE.width);
             newHeight = Math.max(newHeight, MIN_SHAPE_SIZE.height);
-            
+
             // Update element
             const newShapes = canvasState.shapes.map(shape =>
               shape.id === elementId ? { ...shape, x: newX, y: newY, width: newWidth, height: newHeight } : shape
@@ -1215,10 +1345,10 @@
             const { lineId, handle, originalLine } = lineEditingState;
             const snapTarget = findSnapTarget(point);
             const targetPoint = snapTarget ? snapTarget.point : point;
-            
+
             const newLines = canvasState.lines.map(line => {
               if (line.id !== lineId) return line;
-              
+
               if (handle === 'start') {
                 return {
                   ...line,
@@ -1234,7 +1364,7 @@
               }
               return line;
             });
-            
+
             setCanvasState(createState(canvasState, { lines: newLines }));
           } else if (isDrawingLineRef.current && drawingLine) {
             // Update line end point in real-time while dragging with auto-snap
@@ -1275,7 +1405,7 @@
               const elementBottom = element.y + element.height;
               const boxRight = selectionBox.x + selectionBox.width;
               const boxBottom = selectionBox.y + selectionBox.height;
-              
+
               return element.x < boxRight && elementRight > selectionBox.x && element.y < boxBottom && elementBottom > selectionBox.y;
             }).map(el => el.id);
             setSelectedElementIds(selectedIds);
@@ -1288,20 +1418,20 @@
             setLineEditingState(null);
           } else if (shapePreview) {
             const id = createUniqueId();
-            const newShape = { 
-              id, type: EcoShapeType.Item, 
-              ...shapePreview, 
-              text: t('defaultItemName'), 
-              fontSize: FONT_SIZES.medium 
+            const newShape = {
+              id, type: EcoShapeType.Item,
+              ...shapePreview,
+              text: t('defaultItemName'),
+              fontSize: FONT_SIZES.medium
             };
             updateHistory(createState(canvasState, { shapes: [...canvasState.shapes, newShape] }));
             setShapePreview(null);
           }
-          
+
           isDraggingRef.current = false;
           dragStartPosRef.current = null;
           selectedElementsStartPosRef.current = [];
-          
+
           // Reset resize state
           if (resizingState) {
             updateHistory(canvasState);
@@ -1338,11 +1468,11 @@
         }, []);
 
         const handleShapeTextChange = useCallback((shapeId, newText, shouldFinish = false) => {
-          const newShapes = canvasState.shapes.map(shape => 
+          const newShapes = canvasState.shapes.map(shape =>
             shape.id === shapeId ? { ...shape, text: newText } : shape
           );
           setCanvasState(createState(canvasState, { shapes: newShapes }));
-          
+
           if (shouldFinish) {
             updateHistory(createState(canvasState, { shapes: newShapes }));
             setEditingShapeId(null);
@@ -1350,20 +1480,20 @@
         }, [canvasState, createState, updateHistory]);
 
         const handleTextChange = useCallback((textId, newText, shouldFinish = false) => {
-          const newTexts = canvasState.texts.map(text => 
+          const newTexts = canvasState.texts.map(text =>
             text.id === textId ? { ...text, text: newText } : text
           );
           setCanvasState(createState(canvasState, { texts: newTexts }));
-          
+
           if (shouldFinish) {
             updateHistory(createState(canvasState, { texts: newTexts }));
             setEditingTextId(null);
           }
         }, [canvasState, createState, updateHistory]);
 
-                const handleSave = useCallback(async (fileName, format, options = {}) => {
+        const handleSave = useCallback(async (fileName, format, options = {}) => {
           setSaveDialogOpen(false);
-          
+
           if (format === 'json') {
             try {
               // JSON形式で保存（データの完全性を保持）
@@ -1377,7 +1507,7 @@
                   height: canvasState.height
                 }
               };
-              
+
               const jsonString = JSON.stringify(saveData, null, 2);
               const blob = new Blob([jsonString], { type: 'application/json' });
               const url = URL.createObjectURL(blob);
@@ -1398,11 +1528,11 @@
                 console.error('SVG element not found');
                 return;
               }
-              
+
               // オブジェクトがある範囲を計算
               const calculateContentBounds = () => {
                 let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-                
+
                 // シェイプの範囲を計算
                 canvasState.shapes.forEach(shape => {
                   minX = Math.min(minX, shape.x);
@@ -1410,7 +1540,7 @@
                   maxX = Math.max(maxX, shape.x + shape.width);
                   maxY = Math.max(maxY, shape.y + shape.height);
                 });
-                
+
                 // テキストの範囲を計算
                 canvasState.texts.forEach(text => {
                   minX = Math.min(minX, text.x);
@@ -1418,7 +1548,7 @@
                   maxX = Math.max(maxX, text.x + text.width);
                   maxY = Math.max(maxY, text.y + text.height);
                 });
-                
+
                 // 線の範囲を計算
                 canvasState.lines.forEach(line => {
                   minX = Math.min(minX, line.start.x, line.end.x);
@@ -1426,52 +1556,52 @@
                   maxX = Math.max(maxX, line.start.x, line.end.x);
                   maxY = Math.max(maxY, line.start.y, line.end.y);
                 });
-                
+
                 // オブジェクトが存在しない場合はデフォルトサイズを使用
                 if (minX === Infinity) {
                   return { x: 0, y: 0, width: 1200, height: 800 };
                 }
-                
+
                 return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
               };
-              
+
               const contentBounds = calculateContentBounds();
               const padding = options.padding || 20;
-              
+
               // キャンバスサイズを設定（オブジェクトの範囲 + パディング）
               const canvasWidth = contentBounds.width + padding * 2;
               const canvasHeight = contentBounds.height + padding * 2;
-              
+
               console.log('Content bounds:', contentBounds);
               console.log('Canvas size:', canvasWidth, 'x', canvasHeight);
               console.log('Padding:', padding);
-              
+
               // キャンバスを作成
               const canvas = document.createElement('canvas');
               const ctx = canvas.getContext('2d');
-              
+
               canvas.width = canvasWidth;
               canvas.height = canvasHeight;
-              
+
               console.log('Canvas size:', canvas.width, 'x', canvas.height);
-              
+
               // 背景を設定
               if (!options.transparentBackground) {
                 ctx.fillStyle = OFF_WHITE_COLOR;
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
               }
-              
+
               // 新しいSVGを作成（オブジェクトの範囲に合わせて調整）
               const createOptimizedSVG = () => {
                 const svgNS = 'http://www.w3.org/2000/svg';
                 const newSvg = document.createElementNS(svgNS, 'svg');
-                
+
                 // SVGの属性を設定
                 newSvg.setAttribute('width', canvasWidth);
                 newSvg.setAttribute('height', canvasHeight);
                 newSvg.setAttribute('viewBox', `0 0 ${canvasWidth} ${canvasHeight}`);
                 newSvg.setAttribute('xmlns', svgNS);
-                
+
                 // 背景（グリッドなし）
                 if (!options.transparentBackground) {
                   const bgRect = document.createElementNS(svgNS, 'rect');
@@ -1480,13 +1610,13 @@
                   bgRect.setAttribute('fill', OFF_WHITE_COLOR);
                   newSvg.appendChild(bgRect);
                 }
-                
+
                 // シェイプを描画
                 canvasState.shapes.forEach(shape => {
                   const rect = document.createElementNS(svgNS, 'rect');
                   const adjustedX = shape.x - contentBounds.x + padding;
                   const adjustedY = shape.y - contentBounds.y + padding;
-                  
+
                   rect.setAttribute('x', adjustedX);
                   rect.setAttribute('y', adjustedY);
                   rect.setAttribute('width', shape.width);
@@ -1496,9 +1626,9 @@
                   rect.setAttribute('fill', OFF_WHITE_COLOR);
                   rect.setAttribute('stroke', 'black');
                   rect.setAttribute('stroke-width', '2');
-                  
+
                   newSvg.appendChild(rect);
-                  
+
                   // テキストを描画
                   if (shape.text) {
                     const text = document.createElementNS(svgNS, 'text');
@@ -1513,13 +1643,13 @@
                     newSvg.appendChild(text);
                   }
                 });
-                
+
                 // テキスト要素を描画
                 canvasState.texts.forEach(text => {
                   const textElement = document.createElementNS(svgNS, 'text');
                   const adjustedX = text.x - contentBounds.x + padding;
                   const adjustedY = text.y - contentBounds.y + padding;
-                  
+
                   textElement.setAttribute('x', adjustedX);
                   textElement.setAttribute('y', adjustedY + text.height / 2);
                   textElement.setAttribute('font-size', text.fontSize);
@@ -1528,14 +1658,14 @@
                   textElement.textContent = text.text;
                   newSvg.appendChild(textElement);
                 });
-                
+
                 // 線を描画
                 canvasState.lines.forEach(line => {
                   const adjustedStartX = line.start.x - contentBounds.x + padding;
                   const adjustedStartY = line.start.y - contentBounds.y + padding;
                   const adjustedEndX = line.end.x - contentBounds.x + padding;
                   const adjustedEndY = line.end.y - contentBounds.y + padding;
-                  
+
                   if (line.type === EcoLineType.Stressful) {
                     // ジグザグ線の描画
                     const path = document.createElementNS(svgNS, 'path');
@@ -1544,7 +1674,7 @@
                     const distance = Math.sqrt(dx * dx + dy * dy);
                     const segments = Math.max(2, Math.floor(distance / 15));
                     const amplitude = 8;
-                    
+
                     let pathData = `M ${adjustedStartX} ${adjustedStartY} `;
                     for (let i = 1; i < segments; i++) {
                       const t = i / segments;
@@ -1557,7 +1687,7 @@
                       pathData += `L ${x + offsetX} ${y + offsetY} `;
                     }
                     pathData += `L ${adjustedEndX} ${adjustedEndY}`;
-                    
+
                     path.setAttribute('d', pathData);
                     path.setAttribute('stroke', 'black');
                     path.setAttribute('stroke-width', LINE_STROKES[line.type]);
@@ -1578,23 +1708,23 @@
                     newSvg.appendChild(lineElement);
                   }
                 });
-                
+
                 return newSvg;
               };
-              
+
               // 最適化されたSVGを作成
               const optimizedSvg = createOptimizedSVG();
               const svgData = new XMLSerializer().serializeToString(optimizedSvg);
               const svgDataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgData);
-              
+
               // 画像として読み込み
               const img = new Image();
-              
+
               img.onload = () => {
                 try {
                   // 画像をキャンバスに描画（余白を考慮）
                   ctx.drawImage(img, 0, 0, canvasWidth, canvasHeight);
-                  
+
                   // PNGとして保存
                   canvas.toBlob(blob => {
                     if (blob) {
@@ -1611,20 +1741,20 @@
                       throw new Error('Failed to create PNG blob');
                     }
                   }, 'image/png', 1.0);
-                  
+
                 } catch (error) {
                   console.error('Error in PNG conversion:', error);
                   alert(t('errorSavingPng'));
                 }
               };
-              
+
               img.onerror = (error) => {
                 console.error('Failed to load SVG as image:', error);
                 alert(t('errorSavingPng'));
               };
-              
+
               img.src = svgDataUrl;
-              
+
             } catch (error) {
               console.error('Error saving PNG:', error);
               alert(t('errorSavingPng'));
@@ -1635,34 +1765,34 @@
         const handleLoadJSON = useCallback((evt) => {
           const file = evt.target.files[0];
           if (!file) return;
-          
+
           setIsLoading(true);
           const reader = new FileReader();
           reader.onload = (e) => {
             try {
               const jsonContent = e.target.result;
               const saveData = JSON.parse(jsonContent);
-              
+
               // バージョンチェック
               if (!saveData.version || !saveData.canvasState) {
                 throw new Error('Invalid JSON file format');
               }
-              
+
               // キャンバス状態を復元
               const newCanvasState = createState(canvasState, saveData.canvasState);
-              
+
               // グリッド設定を復元
               if (saveData.grid !== undefined) {
                 setShowGrid(saveData.grid);
               }
-              
+
               // 履歴を更新
               updateHistory(newCanvasState);
               setSelectedElementIds([]);
               setEditingShapeId(null);
               setEditingTextId(null);
               setIsLoading(false);
-              
+
               // 成功メッセージ
               alert(t('fileLoadedSuccessfully'));
             } catch (error) {
@@ -1696,7 +1826,7 @@
               redo();
             }
           };
-          
+
           window.addEventListener('keydown', handleKeyDown);
           return () => window.removeEventListener('keydown', handleKeyDown);
         }, [selectedElementIds, editingShapeId, editingTextId, deleteElement, undo, redo]);
@@ -1704,10 +1834,10 @@
         // Set font size for selected texts
         useEffect(() => {
           if (selectedElementIds.length > 0) {
-            const newTexts = canvasState.texts.map(text => 
+            const newTexts = canvasState.texts.map(text =>
               selectedElementIds.includes(text.id) ? { ...text, fontSize } : text
             );
-            const newShapes = canvasState.shapes.map(shape => 
+            const newShapes = canvasState.shapes.map(shape =>
               selectedElementIds.includes(shape.id) ? { ...shape, fontSize } : shape
             );
             setCanvasState(createState(canvasState, { texts: newTexts, shapes: newShapes }));
@@ -1723,7 +1853,7 @@
           );
         }
 
-        return e('div', { className: 'h-screen overflow-hidden relative' },
+        return e('div', { className: 'flex flex-col h-screen bg-gradient-to-br from-gray-50 to-gray-100 font-sans overflow-hidden' },
           e(Header, {
             onSave: () => setSaveDialogOpen(true),
             onLoadJSON: handleLoadJSON,
@@ -1735,7 +1865,7 @@
             setShowGrid
           }),
           e(Palette, { activeTool, setActiveTool, fontSize, setFontSize }),
-          e('div', { className: 'pt-28 pb-12 h-full overflow-auto' },
+          e('main', { className: 'flex-1 overflow-auto bg-white m-4 rounded-xl shadow-lg border border-gray-200' },
             e(Canvas, {
               canvasState,
               onMouseDown: handleMouseDown,
@@ -1772,5 +1902,6 @@
       const AppWithLanguageProvider = () => e(LanguageProvider, null, e(App));
       ReactDOM.render(e(AppWithLanguageProvider), document.getElementById('root'));
     </script>
-</body>
+  </body>
+
 </html>
