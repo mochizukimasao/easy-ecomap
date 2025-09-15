@@ -1587,7 +1587,7 @@
 
               // 背景を設定
               if (!options.transparentBackground) {
-                ctx.fillStyle = OFF_WHITE_COLOR;
+                ctx.fillStyle = '#f8f9fa';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
               }
 
@@ -1607,7 +1607,7 @@
                   const bgRect = document.createElementNS(svgNS, 'rect');
                   bgRect.setAttribute('width', '100%');
                   bgRect.setAttribute('height', '100%');
-                  bgRect.setAttribute('fill', OFF_WHITE_COLOR);
+                  bgRect.setAttribute('fill', '#f8f9fa');
                   newSvg.appendChild(bgRect);
                 }
 
@@ -1623,7 +1623,7 @@
                   rect.setAttribute('height', shape.height);
                   rect.setAttribute('rx', '15');
                   rect.setAttribute('ry', '15');
-                  rect.setAttribute('fill', OFF_WHITE_COLOR);
+                  rect.setAttribute('fill', '#ffffff');
                   rect.setAttribute('stroke', 'black');
                   rect.setAttribute('stroke-width', '2');
 
@@ -1714,6 +1714,30 @@
 
               // 最適化されたSVGを作成
               const optimizedSvg = createOptimizedSVG();
+              
+              // currentColorを実際の色に置き換え
+              const replaceCurrentColor = (element) => {
+                const elements = element.querySelectorAll ? element.querySelectorAll('*') : [];
+                elements.forEach(el => {
+                  if (el.getAttribute('stroke') === 'currentColor') {
+                    el.setAttribute('stroke', 'black');
+                  }
+                  if (el.getAttribute('fill') === 'currentColor') {
+                    el.setAttribute('fill', 'black');
+                  }
+                });
+                
+                // 自身の属性もチェック
+                if (element.getAttribute && element.getAttribute('stroke') === 'currentColor') {
+                  element.setAttribute('stroke', 'black');
+                }
+                if (element.getAttribute && element.getAttribute('fill') === 'currentColor') {
+                  element.setAttribute('fill', 'black');
+                }
+              };
+              
+              replaceCurrentColor(optimizedSvg);
+              
               const svgData = new XMLSerializer().serializeToString(optimizedSvg);
               const svgDataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgData);
 
