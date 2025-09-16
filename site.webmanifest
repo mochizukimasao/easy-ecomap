@@ -1,6 +1,6 @@
 {
-  "name": "Easy Ecomap - かんたんエコマップ",
-  "short_name": "Easy Ecomap",
+  "name": "Easy Ecomap JP",
+  "short_name": "Easy Ecomap JP",
   "description": "PC専用エコマップ作成ツール",
   "start_url": "/",
   "display": "browser",
@@ -9,7 +9,11 @@
   "orientation": "landscape",
   "scope": "/",
   "lang": "ja",
-  "categories": ["productivity", "business", "education"],
+  "categories": [
+    "productivity",
+    "business",
+    "education"
+  ],
   "icons": [
     {
       "src": "/favicon-16x16.png",
@@ -17,7 +21,7 @@
       "type": "image/png"
     },
     {
-      "src": "/favicon-32x32.png", 
+      "src": "/favicon-32x32.png",
       "sizes": "32x32",
       "type": "image/png"
     },

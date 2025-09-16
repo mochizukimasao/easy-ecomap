@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Easy Ecomap Development Server Startup Script
+# Easy Ecomap JP Development Server Startup Script
 # This script starts a local development server and opens the application in the browser
 
 set -e
@@ -50,7 +50,7 @@ kill_port() {
 
 # Main function
 main() {
-    print_status "Starting Easy Ecomap Development Server..."
+    print_status "Starting Easy Ecomap JP Development Server..."
 
     # Check if we're in the right directory
     if [ ! -f "index.html" ]; then
@@ -117,7 +117,7 @@ main() {
 
 # Help function
 show_help() {
-    echo "Easy Ecomap Development Server"
+    echo "Easy Ecomap JP Development Server"
     echo ""
     echo "Usage: $0 [PORT]"
     echo ""

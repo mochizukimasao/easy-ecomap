@@ -2,8 +2,8 @@
   "editor.formatOnSave": true,
   "editor.formatOnPaste": true,
   "editor.codeActionsOnSave": {
-    "source.fixAll": true,
-    "source.organizeImports": true
+    "source.fixAll": "explicit",
+    "source.organizeImports": "explicit"
   },
   "editor.tabSize": 2,
   "editor.insertSpaces": true,
@@ -28,7 +28,7 @@
   "css.lint.unknownAtRules": "ignore",
   "javascript.validate.enable": true,
   "typescript.validate.enable": true,
-  "liveServer.settings.port": 3000,
+  "liveServer.settings.port": 3001,
   "liveServer.settings.portReuse": false,
   "liveServer.settings.wait": 100,
   "liveServer.settings.root": "/",
